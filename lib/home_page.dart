@@ -21,19 +21,7 @@ class _HomePageState extends State<HomePage>{
           Expanded(
             flex: 7,
             child: Container(color: Colors.yellow,
-            child: GridView.builder(
-              physics: NeverScrollableScrollPhysics(),
-              padding: EdgeInsets.fromLTRB(30, 20, 36, 20),
-              itemCount: 30,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                mainAxisSpacing: 4,
-                crossAxisSpacing: 4,
-                crossAxisCount: 5,
-              ), 
-              itemBuilder: (context, index){
-                return Container(color: Colors.red,);
-              }
-              ),
+            child: Grid(),
             )),
           Expanded(
             flex: 4,
@@ -41,5 +29,30 @@ class _HomePageState extends State<HomePage>{
         ],
       ),
     );
+  }
+}
+
+class Grid extends StatelessWidget {
+  const Grid({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      physics: NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(30, 20, 36, 20),
+      itemCount: 30,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        mainAxisSpacing: 4,
+        crossAxisSpacing: 4,
+        crossAxisCount: 5,
+      ), 
+      itemBuilder: (context, index){
+        return Container(color: Colors.red,
+        child: Center(child: Text(index.toString()),),
+        );
+      }
+      );
   }
 }
