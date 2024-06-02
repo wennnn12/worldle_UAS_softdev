@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'register.dart'; // Import the register page
 
 class LoginPage extends StatelessWidget {
   @override
@@ -13,29 +14,42 @@ class LoginPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Logo (Replace with your logo widget)
-            Image.asset(
-              'assets/images/logo.png',
-              width: 150,
-            ),
             SizedBox(height: 20),
-            Container(
-              width: 250,
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Enter your email',
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Email',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-              ),
+                Container(
+                  width: 250,
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: 'Enter your email',
+                    ),
+                  ),
+                ),
+              ],
             ),
             SizedBox(height: 10),
-            Container(
-              width: 250,
-              child: TextField(
-                obscureText: true,
-                decoration: InputDecoration(
-                  hintText: 'Enter your password',
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Password',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-              ),
+                Container(
+                  width: 250,
+                  child: TextField(
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: 'Enter your password',
+                    ),
+                  ),
+                ),
+              ],
             ),
             SizedBox(height: 20),
             ElevatedButton(
@@ -43,6 +57,21 @@ class LoginPage extends StatelessWidget {
                 // Implement login functionality
               },
               child: Text('Login'),
+            ),
+            SizedBox(height: 10),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => RegisterPage()),
+                );
+              },
+              child: Text(
+                "Don't have an account? Signup",
+                style: TextStyle(
+                  decoration: TextDecoration.underline,
+                ),
+              ),
             ),
           ],
         ),
