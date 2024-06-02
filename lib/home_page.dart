@@ -1,19 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'result_dialog.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  final String initialTargetWord;
+
+  const HomePage({Key? key, required this.initialTargetWord}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  static const String targetWord = "GHOST";
+  late String targetWord;
   List<String> gridContent = List.generate(30, (index) => '');
   List<Color> gridColors = List.generate(30, (index) => Colors.red);
   int currentRow = 0;
   int attempts = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    targetWord = widget.initialTargetWord;
+  }
+
+  Future<void> _fetchRandomWord() async {
+    final wordList = await FirebaseFirestore.instance.collection('Wordlists').get();
+    final words = wordList.docs.map((doc) => doc['word'] as String).toList();
+    words.shuffle();
+    setState(() {
+      targetWord = words.isNotEmpty ? words.first : 'ERROR';
+    });
+  }
 
   void handleKeyPress(String letter) {
     setState(() {
@@ -43,70 +61,93 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void handleSubmit() {
-    setState(() {
-      int startIndex = currentRow * 5;
-      int endIndex = startIndex + 5;
-
-      bool isRowComplete = true;
-      for (int i = startIndex; i < endIndex; i++) {
-        if (gridContent[i].isEmpty) {
-          isRowComplete = false;
-          break;
-        }
-      }
-
-      if (isRowComplete) {
-        attempts++;
-        bool hasWon = true;
-
-        for (int i = 0; i < 5; i++) {
-          if (gridContent[startIndex + i] == targetWord[i]) {
-            gridColors[startIndex + i] = Colors.green;
-          } else if (targetWord.contains(gridContent[startIndex + i])) {
-            gridColors[startIndex + i] = Colors.yellow;
-          } else {
-            gridColors[startIndex + i] = Colors.grey;
-          }
-
-          if (gridContent[startIndex + i] != targetWord[i]) {
-            hasWon = false;
-          }
-        }
-
-        if (hasWon) {
-          showDialog(
-            context: context,
-            builder: (context) => ResultDialog(
-              hasWon: true,
-              attempts: attempts,
-              onRetry: handleReset,
-            ),
-          );
-        } else if (currentRow >= 5) {
-          showDialog(
-            context: context,
-            builder: (context) => ResultDialog(
-              hasWon: false,
-              attempts: attempts,
-              onRetry: handleReset,
-            ),
-          );
-        } else {
-          currentRow++;
-        }
-      }
-    });
-  }
-
-void handleReset() {
+ void handleSubmit() {
   setState(() {
-    gridContent = List.generate(30, (index) => '');
-    gridColors = List.generate(30, (index) => Colors.red);
-    currentRow = 0;
-    attempts = 0;
+    int startIndex = currentRow * 5;
+    int endIndex = startIndex + 5;
+
+    bool isRowComplete = true;
+    for (int i = startIndex; i < endIndex; i++) {
+      if (gridContent[i].isEmpty) {
+        isRowComplete = false;
+        break;
+      }
+    }
+
+    if (isRowComplete) {
+      attempts++;
+      bool hasWon = true;
+
+      // First pass: Identify and mark correct letters (green)
+      Map<String, int> targetLetterCounts = {};
+      for (int i = 0; i < targetWord.length; i++) {
+        String letter = targetWord[i];
+        if (!targetLetterCounts.containsKey(letter)) {
+          targetLetterCounts[letter] = 0;
+        }
+        targetLetterCounts[letter] = targetLetterCounts[letter]! + 1;
+      }
+
+      for (int i = 0; i < 5; i++) {
+        if (gridContent[startIndex + i] == targetWord[i]) {
+          gridColors[startIndex + i] = Colors.green;
+          targetLetterCounts[gridContent[startIndex + i]] = targetLetterCounts[gridContent[startIndex + i]]! - 1;
+        } else {
+          gridColors[startIndex + i] = Colors.grey;
+          hasWon = false;
+        }
+      }
+
+      // Second pass: Identify correct letters in incorrect positions (yellow)
+      for (int i = 0; i < 5; i++) {
+        if (gridColors[startIndex + i] != Colors.green && targetLetterCounts[gridContent[startIndex + i]] != null && targetLetterCounts[gridContent[startIndex + i]]! > 0) {
+          gridColors[startIndex + i] = Colors.yellow;
+          targetLetterCounts[gridContent[startIndex + i]] = targetLetterCounts[gridContent[startIndex + i]]! - 1;
+        }
+      }
+
+      if (hasWon) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => ResultDialog(
+            hasWon: true,
+            attempts: attempts,
+            onRetry: () async {
+              await _fetchRandomWord();
+              handleReset();
+            },
+          ),
+        );
+      } else if (currentRow >= 5) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => ResultDialog(
+            hasWon: false,
+            attempts: attempts,
+            onRetry: () async {
+              await _fetchRandomWord();
+              handleReset();
+            },
+          ),
+        );
+      } else {
+        currentRow++;
+      }
+    }
   });
 }
+
+
+  void handleReset() {
+    setState(() {
+      gridContent = List.generate(30, (index) => '');
+      gridColors = List.generate(30, (index) => Colors.red);
+      currentRow = 0;
+      attempts = 0;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

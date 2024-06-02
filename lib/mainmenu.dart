@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'login.dart'; // Import the login page
-import 'home_page.dart';
 
 class MainMenu extends StatelessWidget {
+  Future<String> _fetchRandomWord() async {
+    final wordList = await FirebaseFirestore.instance.collection('Wordlists').get();
+    final words = wordList.docs.map((doc) => doc['word'] as String).toList();
+    words.shuffle();
+    return words.isNotEmpty ? words.first : 'ERROR'; // Fallback word if list is empty
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -18,10 +24,7 @@ class MainMenu extends StatelessWidget {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => HomePage()),
-                );
+                // Navigate to the game page
               },
               child: Text('Play'),
             ),
