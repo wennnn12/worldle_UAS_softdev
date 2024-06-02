@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'manageaccount.dart';
 import 'wordlists.dart';
@@ -25,15 +26,36 @@ class AdminPage extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                DisplayBox(title: 'Account Registered'),
-                DisplayBox(title: 'Word Lists'),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                DisplayBox(title: 'Account Banned'),
-                DisplayBox(title: 'Prohibited Words'),
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance.collection('users').snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return DisplayBox(title: 'Account Registered', value: 'Loading...');
+                    }
+                    int registeredCount = snapshot.data!.docs.length;
+                    return DisplayBox(title: 'Account Registered', value: registeredCount.toString());
+                  },
+                ),
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance.collection('Wordlists').snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return DisplayBox(title: 'Word Lists', value: 'Loading...');
+                    }
+                    int wordListsCount = snapshot.data!.docs.length;
+                    return DisplayBox(title: 'Word Lists', value: wordListsCount.toString());
+                  },
+                ),
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance.collection('deleted_accounts').snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return DisplayBox(title: 'Deleted Accounts', value: 'Loading...');
+                    }
+                    int deletedCount = snapshot.data!.docs.length;
+                    return DisplayBox(title: 'Deleted Accounts', value: deletedCount.toString());
+                  },
+                ),
               ],
             ),
             SizedBox(height: 20),
@@ -64,8 +86,9 @@ class AdminPage extends StatelessWidget {
 
 class DisplayBox extends StatelessWidget {
   final String title;
+  final String value;
 
-  const DisplayBox({required this.title});
+  const DisplayBox({required this.title, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +97,15 @@ class DisplayBox extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border.all(),
       ),
-      child: Text(title),
+      child: Column(
+        children: [
+          Text(title),
+          Text(
+            value,
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
     );
   }
 }
