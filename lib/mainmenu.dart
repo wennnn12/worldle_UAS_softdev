@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:worldle_game/home_page.dart';
 import 'login.dart'; // Import the login page
 
 class MainMenu extends StatelessWidget {
@@ -17,7 +18,10 @@ class MainMenu extends StatelessWidget {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // Navigate to the game page
+                  Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => HomePage()),
+                );
               },
               child: Text('Play'),
             ),
