@@ -1,6 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'login.dart'; // Import the login page
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'home_page.dart';
+import 'login.dart';
 
 class MainMenu extends StatelessWidget {
   Future<String> _fetchRandomWord() async {
@@ -24,10 +25,14 @@ class MainMenu extends StatelessWidget {
           children: [
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                // Navigate to the game page
+              onPressed: () async {
+                String randomWord = await _fetchRandomWord();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => HomePage(initialTargetWord: randomWord)),
+                );
               },
-              child: Text('Play Game'),
+              child: Text('Play'),
             ),
             SizedBox(height: 10),
             ElevatedButton(
