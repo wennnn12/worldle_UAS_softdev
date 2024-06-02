@@ -67,4 +67,10 @@ flutter {
     source '../..'
 }
 
-dependencies {}
+dependencies {
+        // Add the latest Google Play services dependency
+    implementation 'com.google.android.gms:play-services-auth:20.0.1'
+    // Add the latest Firebase Auth dependency
+    implementation 'com.google.firebase:firebase-auth:21.0.1'
+    // Add other Firebase dependencies if needed
+}
