@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'result_dialog.dart';
 
-class HomePage extends StatefulWidget{
+class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
 
   @override
@@ -8,16 +9,17 @@ class HomePage extends StatefulWidget{
 }
 
 class _HomePageState extends State<HomePage> {
+  static const String targetWord = "GHOST";
   List<String> gridContent = List.generate(30, (index) => '');
+  List<Color> gridColors = List.generate(30, (index) => Colors.red);
   int currentRow = 0;
+  int attempts = 0;
 
   void handleKeyPress(String letter) {
     setState(() {
-      // Calculate the start and end index of the current row
       int startIndex = currentRow * 5;
       int endIndex = startIndex + 5;
 
-      // Find the first empty slot in the current row
       for (int i = startIndex; i < endIndex; i++) {
         if (gridContent[i].isEmpty) {
           gridContent[i] = letter;
@@ -29,11 +31,9 @@ class _HomePageState extends State<HomePage> {
 
   void handleDeletePress() {
     setState(() {
-      // Calculate the start and end index of the current row
       int startIndex = currentRow * 5;
       int endIndex = startIndex + 5;
 
-      // Find the last filled slot in the current row
       for (int i = endIndex - 1; i >= startIndex; i--) {
         if (gridContent[i].isNotEmpty) {
           gridContent[i] = '';
@@ -45,11 +45,9 @@ class _HomePageState extends State<HomePage> {
 
   void handleSubmit() {
     setState(() {
-      // Calculate the start and end index of the current row
       int startIndex = currentRow * 5;
       int endIndex = startIndex + 5;
 
-      // Check if the current row is fully populated
       bool isRowComplete = true;
       for (int i = startIndex; i < endIndex; i++) {
         if (gridContent[i].isEmpty) {
@@ -58,12 +56,57 @@ class _HomePageState extends State<HomePage> {
         }
       }
 
-      // Move to the next row if the current row is complete
-      if (isRowComplete && currentRow < 5) {
-        currentRow++;
+      if (isRowComplete) {
+        attempts++;
+        bool hasWon = true;
+
+        for (int i = 0; i < 5; i++) {
+          if (gridContent[startIndex + i] == targetWord[i]) {
+            gridColors[startIndex + i] = Colors.green;
+          } else if (targetWord.contains(gridContent[startIndex + i])) {
+            gridColors[startIndex + i] = Colors.yellow;
+          } else {
+            gridColors[startIndex + i] = Colors.grey;
+          }
+
+          if (gridContent[startIndex + i] != targetWord[i]) {
+            hasWon = false;
+          }
+        }
+
+        if (hasWon) {
+          showDialog(
+            context: context,
+            builder: (context) => ResultDialog(
+              hasWon: true,
+              attempts: attempts,
+              onRetry: handleReset,
+            ),
+          );
+        } else if (currentRow >= 5) {
+          showDialog(
+            context: context,
+            builder: (context) => ResultDialog(
+              hasWon: false,
+              attempts: attempts,
+              onRetry: handleReset,
+            ),
+          );
+        } else {
+          currentRow++;
+        }
       }
     });
   }
+
+void handleReset() {
+  setState(() {
+    gridContent = List.generate(30, (index) => '');
+    gridColors = List.generate(30, (index) => Colors.red);
+    currentRow = 0;
+    attempts = 0;
+  });
+}
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +122,7 @@ class _HomePageState extends State<HomePage> {
             flex: 7,
             child: Container(
               color: Colors.yellow,
-              child: Grid(gridContent: gridContent),
+              child: Grid(gridContent: gridContent, gridColors: gridColors),
             ),
           ),
           Expanded(
@@ -98,9 +141,19 @@ class _HomePageState extends State<HomePage> {
                   Expanded(
                     flex: 1,
                     child: Center(
-                      child: ElevatedButton(
-                        onPressed: handleSubmit,
-                        child: Text('Submit', style: TextStyle(fontSize: 18)),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ElevatedButton(
+                            onPressed: handleSubmit,
+                            child: Text('Submit', style: TextStyle(fontSize: 18)),
+                          ),
+                          SizedBox(width: 20),
+                          ElevatedButton(
+                            onPressed: handleReset,
+                            child: Text('Reset', style: TextStyle(fontSize: 18)),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -114,12 +167,11 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-
-
 class Grid extends StatelessWidget {
   final List<String> gridContent;
+  final List<Color> gridColors;
 
-  const Grid({required this.gridContent, Key? key}) : super(key: key);
+  const Grid({required this.gridContent, required this.gridColors, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +186,7 @@ class Grid extends StatelessWidget {
       ),
       itemBuilder: (context, index) {
         return Container(
-          color: Colors.red,
+          color: gridColors[index],
           child: Center(
             child: Text(
               gridContent[index],
@@ -147,8 +199,6 @@ class Grid extends StatelessWidget {
   }
 }
 
-
-//ON screen Keyboard
 class Keyboard extends StatelessWidget {
   final Function(String) onKeyPressed;
   final Function() onDeletePressed;
