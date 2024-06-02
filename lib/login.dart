@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:worldle_game/home_page.dart';
 import 'register.dart'; // Import the register page
 import 'package:firebase_auth/firebase_auth.dart';
+import 'home_page.dart'; // Import your main page
 
 class LoginPage extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
@@ -13,16 +15,26 @@ class LoginPage extends StatelessWidget {
         password: passwordController.text.trim(),
       );
 
-      // You can add additional logic here, such as navigating to a new screen upon successful login
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Login successful!'),
-        backgroundColor: Colors.green,
-      ));
+      // Navigate to the main page upon successful login
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage()),
+      );
+
+      // Show a snackbar or toast message if needed
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Login successful!'),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Error logging in: $e'),
-        backgroundColor: Colors.red,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error logging in: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'login.dart'; // Import the login page
 
 class RegisterPage extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
@@ -33,6 +34,12 @@ class RegisterPage extends StatelessWidget {
         content: Text('Registration successful!'),
         backgroundColor: Colors.green,
       ));
+
+      // Redirect to the login page upon successful registration
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Error registering user: $e'),
