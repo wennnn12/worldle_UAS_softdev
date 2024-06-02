@@ -1,5 +1,8 @@
 plugins {
     id "com.android.application"
+    // START: FlutterFire Configuration
+    id 'com.google.gms.google-services'
+    // END: FlutterFire Configuration
     id "kotlin-android"
     id "dev.flutter.flutter-gradle-plugin"
 }
@@ -64,4 +67,10 @@ flutter {
     source '../..'
 }
 
-dependencies {}
+dependencies {
+        // Add the latest Google Play services dependency
+    implementation 'com.google.android.gms:play-services-auth:20.0.1'
+    // Add the latest Firebase Auth dependency
+    implementation 'com.google.firebase:firebase-auth:21.0.1'
+    // Add other Firebase dependencies if needed
+}
