@@ -14,11 +14,6 @@ class MainMenu extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Logo (Replace with your logo widget)
-            Image.asset(
-              'assets/bloons td 6.jpg',
-              width: 150,
-            ),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
