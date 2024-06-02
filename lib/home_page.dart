@@ -1,19 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'result_dialog.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  final String initialTargetWord;
+
+  const HomePage({Key? key, required this.initialTargetWord}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  static const String targetWord = "GHOST";
+  late String targetWord;
   List<String> gridContent = List.generate(30, (index) => '');
   List<Color> gridColors = List.generate(30, (index) => Colors.red);
   int currentRow = 0;
   int attempts = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    targetWord = widget.initialTargetWord;
+  }
+
+  Future<void> _fetchRandomWord() async {
+    final wordList = await FirebaseFirestore.instance.collection('Wordlists').get();
+    final words = wordList.docs.map((doc) => doc['word'] as String).toList();
+    words.shuffle();
+    setState(() {
+      targetWord = words.isNotEmpty ? words.first : 'ERROR';
+    });
+  }
 
   void handleKeyPress(String letter) {
     setState(() {
@@ -80,7 +98,10 @@ class _HomePageState extends State<HomePage> {
             builder: (context) => ResultDialog(
               hasWon: true,
               attempts: attempts,
-              onRetry: handleReset,
+              onRetry: () async {
+                await _fetchRandomWord();
+                handleReset();
+              },
             ),
           );
         } else if (currentRow >= 5) {
@@ -89,7 +110,10 @@ class _HomePageState extends State<HomePage> {
             builder: (context) => ResultDialog(
               hasWon: false,
               attempts: attempts,
-              onRetry: handleReset,
+              onRetry: () async {
+                await _fetchRandomWord();
+                handleReset();
+              },
             ),
           );
         } else {
@@ -99,14 +123,14 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-void handleReset() {
-  setState(() {
-    gridContent = List.generate(30, (index) => '');
-    gridColors = List.generate(30, (index) => Colors.red);
-    currentRow = 0;
-    attempts = 0;
-  });
-}
+  void handleReset() {
+    setState(() {
+      gridContent = List.generate(30, (index) => '');
+      gridColors = List.generate(30, (index) => Colors.red);
+      currentRow = 0;
+      attempts = 0;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

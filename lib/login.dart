@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:worldle_game/home_page.dart';
+import 'home_page.dart';
 import 'admin/admin.dart';
-import 'register.dart'; // Import the AdminPage
+import 'register.dart';
 
 class LoginPage extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+
+  Future<String> _fetchRandomWord() async {
+    final wordList = await FirebaseFirestore.instance.collection('Wordlists').get();
+    final words = wordList.docs.map((doc) => doc['word'] as String).toList();
+    words.shuffle();
+    return words.isNotEmpty ? words.first : 'ERROR'; // Fallback word if list is empty
+  }
 
   Future<void> _loginUser(BuildContext context) async {
     try {
@@ -16,21 +23,19 @@ class LoginPage extends StatelessWidget {
         password: passwordController.text.trim(),
       );
 
-      // Check if the logged-in user is an admin
       var userData = await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).get();
       bool isAdmin = userData.get('isAdmin') ?? false;
-      
+
       if (isAdmin) {
-        // Redirect to AdminPage
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => AdminPage()),
         );
       } else {
-        // Redirect to HomePage or any other page for regular users
+        String randomWord = await _fetchRandomWord();
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage()),
+          MaterialPageRoute(builder: (context) => HomePage(initialTargetWord: randomWord)),
         );
       }
     } catch (e) {

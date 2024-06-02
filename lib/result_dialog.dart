@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class ResultDialog extends StatelessWidget {
   final bool hasWon;
   final int attempts;
-  final VoidCallback onRetry;
+  final Future<void> Function() onRetry;
 
   const ResultDialog({
     required this.hasWon,
@@ -12,9 +12,9 @@ class ResultDialog extends StatelessWidget {
     Key? key,
   }) : super(key: key);
 
-  void handleReset(BuildContext context) {
+  void handleReset(BuildContext context) async {
     Navigator.pop(context);
-    onRetry();
+    await onRetry();
   }
 
   @override
