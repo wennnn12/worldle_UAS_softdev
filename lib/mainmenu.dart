@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'login.dart'; // Import the login page
+import 'home_page.dart';
 
 class MainMenu extends StatelessWidget {
   @override
@@ -17,7 +18,10 @@ class MainMenu extends StatelessWidget {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                // Navigate to the game page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => HomePage()),
+                );
               },
               child: Text('Play'),
             ),
