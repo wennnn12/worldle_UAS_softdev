@@ -10,43 +10,45 @@ class RegisterPage extends StatelessWidget {
   final TextEditingController confirmPasswordController = TextEditingController();
 
   Future<void> _registerUser(BuildContext context) async {
-    try {
-      if (passwordController.text != confirmPasswordController.text) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Passwords do not match!'),
-          backgroundColor: Colors.red,
-        ));
-        return;
-      }
-
-      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
-
-      // Add user data to Firestore collection
-      await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
-        'email': emailController.text.trim(),
-        'username': usernameController.text.trim(),
-      });
-
+  try {
+    if (passwordController.text != confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Registration successful!'),
-        backgroundColor: Colors.green,
-      ));
-
-      // Redirect to the login page upon successful registration
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => LoginPage()),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Error registering user: $e'),
+        content: Text('Passwords do not match!'),
         backgroundColor: Colors.red,
       ));
+      return;
     }
+
+    UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      email: emailController.text.trim(),
+      password: passwordController.text.trim(),
+    );
+
+    // Add user data to Firestore collection with isAdmin set to false
+    await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
+      'email': emailController.text.trim(),
+      'username': usernameController.text.trim(),
+      'isAdmin': false, // Set isAdmin to false for new users
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Registration successful!'),
+      backgroundColor: Colors.green,
+    ));
+
+    // Redirect to the login page upon successful registration
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LoginPage()),
+    );
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Error registering user: $e'),
+      backgroundColor: Colors.red,
+    ));
   }
+}
+
 
   @override
   Widget build(BuildContext context) {

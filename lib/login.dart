@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:worldle_game/home_page.dart';
-import 'register.dart'; // Import the register page
 import 'package:firebase_auth/firebase_auth.dart';
-import 'home_page.dart'; // Import your main page
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:worldle_game/home_page.dart';
+import 'admin/admin.dart';
+import 'register.dart'; // Import the AdminPage
 
 class LoginPage extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
@@ -15,19 +16,23 @@ class LoginPage extends StatelessWidget {
         password: passwordController.text.trim(),
       );
 
-      // Navigate to the main page upon successful login
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomePage()),
-      );
-
-      // Show a snackbar or toast message if needed
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Login successful!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      // Check if the logged-in user is an admin
+      var userData = await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).get();
+      bool isAdmin = userData.get('isAdmin') ?? false;
+      
+      if (isAdmin) {
+        // Redirect to AdminPage
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => AdminPage()),
+        );
+      } else {
+        // Redirect to HomePage or any other page for regular users
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomePage()),
+        );
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
