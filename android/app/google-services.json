@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "771481032401",
+    "project_id": "projectuas-worldle",
+    "storage_bucket": "projectuas-worldle.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:771481032401:android:c0c81da7c6c93704e8d7f0",
+        "android_client_info": {
+          "package_name": "com.example.worldle_game"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBitdx8rvvlvcvMIX2ioOGBQbLmj_vg6MQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
