@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'result_dialog.dart';
 
-class HomePage extends StatefulWidget {
+class GameEasy extends StatefulWidget {
   final String initialTargetWord;
 
-  const HomePage({Key? key, required this.initialTargetWord}) : super(key: key);
+  const GameEasy({Key? key, required this.initialTargetWord}) : super(key: key);
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<GameEasy> createState() => _GameEasyState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _GameEasyState extends State<GameEasy> {
   late String targetWord;
   List<String> gridContent = List.generate(30, (index) => '');
   List<Color> gridColors = List.generate(30, (index) => Colors.red);
