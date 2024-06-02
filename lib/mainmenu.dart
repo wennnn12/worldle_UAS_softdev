@@ -32,7 +32,7 @@ class MainMenu extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => HomePage(initialTargetWord: randomWord)),
                 );
               },
-              child: Text('Play'),
+              child: Text('Play Game'),
             ),
             SizedBox(height: 10),
             ElevatedButton(
