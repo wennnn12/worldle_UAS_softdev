@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'home_page.dart';
+import 'gameEasy.dart';
 import 'admin/admin.dart';
 import 'register.dart';
 
@@ -35,7 +35,7 @@ class LoginPage extends StatelessWidget {
         String randomWord = await _fetchRandomWord();
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomePage(initialTargetWord: randomWord)),
+          MaterialPageRoute(builder: (context) => GameEasy(initialTargetWord: randomWord)),
         );
       }
     } catch (e) {
