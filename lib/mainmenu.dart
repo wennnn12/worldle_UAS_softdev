@@ -26,7 +26,7 @@ class MainMenu extends StatelessWidget {
               onPressed: () {
                 // Navigate to the game page
               },
-              child: Text('Play'),
+              child: Text('Play Game'),
             ),
             SizedBox(height: 10),
             ElevatedButton(
