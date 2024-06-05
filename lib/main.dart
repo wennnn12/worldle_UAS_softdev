@@ -19,7 +19,11 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Worldle',
       theme: ThemeData(),
-      home: SettingPage(),
+      home: MainMenu(),
+      routes: {
+        '/mainmenu': (context) => MainMenu(),
+        '/settings': (context) => SettingPage(),
+      },
     );
   }
 }

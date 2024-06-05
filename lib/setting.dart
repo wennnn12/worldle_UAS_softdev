@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-
+import 'gameEasy.dart';
+import 'gameMedium.dart';
+import 'gameHard.dart';
 
 class SettingPage extends StatefulWidget {
   @override
@@ -12,64 +14,67 @@ class _SettingPageState extends State<SettingPage> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false, // This line removes the debug label
-      theme: _isDarkMode ? ThemeData.dark() : ThemeData.light(),
-      home: Scaffold(
-        appBar: AppBar(
-          title: Center(child: Text('SETTING')),
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushReplacementNamed(context, '/mainmenu');
+          },
         ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Level',
-                style: TextStyle(fontSize: 24),
+        title: Center(child: Text('SETTING')),
+        automaticallyImplyLeading: false,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Level',
+              style: TextStyle(fontSize: 24),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Easy'),
+                      Text('Medium'),
+                      Text('Hard'),
+                    ],
+                  ),
+                  Slider(
+                    value: _difficultyLevel.toDouble(),
+                    min: 0,
+                    max: 2,
+                    divisions: 2,
+                    label: _getDifficultyText(),
+                    onChanged: (double value) {
+                      setState(() {
+                        _difficultyLevel = value.round();
+                      });
+                    },
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    'Theme',
+                    style: TextStyle(fontSize: 24),
+                  ),
+                  SwitchListTile(
+                    title: Text(_isDarkMode ? 'Night Mode' : 'Light Mode'),
+                    value: _isDarkMode,
+                    onChanged: (bool value) {
+                      setState(() {
+                        _isDarkMode = value;
+                      });
+                    },
+                  ),
+                ],
               ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Easy'),
-                        Text('Medium'),
-                        Text('Hard'),
-                      ],
-                    ),
-                    Slider(
-                      value: _difficultyLevel.toDouble(),
-                      min: 0,
-                      max: 2,
-                      divisions: 2,
-                      label: _getDifficultyText(),
-                      onChanged: (double value) {
-                        setState(() {
-                          _difficultyLevel = value.round();
-                        });
-                      },
-                    ),
-                    SizedBox(height: 5),
-                    Text(
-                      'Theme',
-                      style: TextStyle(fontSize: 24),
-                    ),
-                    SwitchListTile(
-                      title: Text(_isDarkMode ? 'Night Mode' : 'Light Mode'),
-                      value: _isDarkMode,
-                      onChanged: (bool value) {
-                        setState(() {
-                          _isDarkMode = value;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -88,6 +93,7 @@ class _SettingPageState extends State<SettingPage> {
     }
   }
 }
+
 
 void main() {
   runApp(MaterialApp(
