@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart'; // Import Firebase Core
+import 'setting.dart';
 
 import 'mainmenu.dart';
 
@@ -18,7 +19,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Worldle',
       theme: ThemeData(),
-      home: MainMenu(),
+      home: SettingPage(),
     );
   }
 }
