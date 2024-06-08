@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'result_dialog.dart';
 
 class GameEasy extends StatefulWidget {
@@ -17,11 +18,35 @@ class _GameEasyState extends State<GameEasy> {
   List<Color> gridColors = List.generate(30, (index) => Colors.red);
   int currentRow = 0;
   int attempts = 0;
+  bool isGuest = true;  // Assume user is a guest by default
+  User? currentUser;
+  Map<String, dynamic>? userStats; // Store user stats
 
   @override
   void initState() {
     super.initState();
     targetWord = widget.initialTargetWord;
+    _checkUser();
+  }
+
+  Future<void> _checkUser() async {
+    currentUser = FirebaseAuth.instance.currentUser;
+    setState(() {
+      isGuest = currentUser == null;
+    });
+    if (!isGuest) {
+      await _fetchUserStats();
+    }
+  }
+
+  Future<void> _fetchUserStats() async {
+    final statsRef = FirebaseFirestore.instance.collection('users').doc(currentUser!.uid).collection('stats').doc('easy');
+    final statsDoc = await statsRef.get();
+    if (statsDoc.exists) {
+      setState(() {
+        userStats = statsDoc.data();
+      });
+    }
   }
 
   Future<void> _fetchRandomWord() async {
@@ -61,8 +86,7 @@ class _GameEasyState extends State<GameEasy> {
     });
   }
 
- void handleSubmit() {
-  setState(() {
+  Future<void> handleSubmit() async {
     int startIndex = currentRow * 5;
     int endIndex = startIndex + 5;
 
@@ -78,7 +102,6 @@ class _GameEasyState extends State<GameEasy> {
       attempts++;
       bool hasWon = true;
 
-      // First pass: Identify and mark correct letters (green)
       Map<String, int> targetLetterCounts = {};
       for (int i = 0; i < targetWord.length; i++) {
         String letter = targetWord[i];
@@ -91,54 +114,96 @@ class _GameEasyState extends State<GameEasy> {
       for (int i = 0; i < 5; i++) {
         if (gridContent[startIndex + i] == targetWord[i]) {
           gridColors[startIndex + i] = Colors.green;
-          targetLetterCounts[gridContent[startIndex + i]] = targetLetterCounts[gridContent[startIndex + i]]! - 1;
+          targetLetterCounts[gridContent[startIndex + i]] =
+              targetLetterCounts[gridContent[startIndex + i]]! - 1;
         } else {
           gridColors[startIndex + i] = Colors.grey;
           hasWon = false;
         }
       }
 
-      // Second pass: Identify correct letters in incorrect positions (yellow)
       for (int i = 0; i < 5; i++) {
-        if (gridColors[startIndex + i] != Colors.green && targetLetterCounts[gridContent[startIndex + i]] != null && targetLetterCounts[gridContent[startIndex + i]]! > 0) {
+        if (gridColors[startIndex + i] != Colors.green &&
+            targetLetterCounts[gridContent[startIndex + i]] != null &&
+            targetLetterCounts[gridContent[startIndex + i]]! > 0) {
           gridColors[startIndex + i] = Colors.yellow;
-          targetLetterCounts[gridContent[startIndex + i]] = targetLetterCounts[gridContent[startIndex + i]]! - 1;
+          targetLetterCounts[gridContent[startIndex + i]] =
+              targetLetterCounts[gridContent[startIndex + i]]! - 1;
         }
       }
 
       if (hasWon) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => ResultDialog(
-            hasWon: true,
-            attempts: attempts,
-            onRetry: () async {
-              await _fetchRandomWord();
-              handleReset();
-            },
-          ),
-        );
+        await _updateStats(true);
+        _showResultDialog(true);
       } else if (currentRow >= 5) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => ResultDialog(
-            hasWon: false,
-            attempts: attempts,
-            onRetry: () async {
-              await _fetchRandomWord();
-              handleReset();
-            },
-          ),
-        );
+        await _updateStats(false);
+        _showResultDialog(false);
       } else {
-        currentRow++;
+        setState(() {
+          currentRow++;
+        });
       }
     }
-  });
-}
+  }
 
+  void _showResultDialog(bool hasWon) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => ResultDialog(
+        hasWon: hasWon,
+        attempts: attempts,
+        onRetry: () async {
+          await _fetchRandomWord();
+          handleReset();
+        },
+        stats: isGuest ? null : userStats, // Only show stats if user is not a guest
+        isGuest: isGuest,
+      ),
+    );
+  }
+
+  Future<void> _updateStats(bool hasWon) async {
+    if (isGuest) return;
+
+    final statsRef = FirebaseFirestore.instance.collection('users').doc(currentUser!.uid).collection('stats').doc('easy');
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final statsDoc = await transaction.get(statsRef);
+
+      if (!statsDoc.exists) {
+        transaction.set(statsRef, {
+          'matchesPlayed': 1,
+          'wins': hasWon ? 1 : 0,
+          'winStreak': hasWon ? 1 : 0,
+          'highestWinStreak': hasWon ? 1 : 0,
+        });
+      } else {
+        final data = statsDoc.data()!;
+        final matchesPlayed = data['matchesPlayed'] + 1;
+        final wins = data['wins'] + (hasWon ? 1 : 0);
+        final winStreak = hasWon ? data['winStreak'] + 1 : 0;
+        final highestWinStreak = hasWon && winStreak > data['highestWinStreak'] ? winStreak : data['highestWinStreak'];
+
+        transaction.update(statsRef, {
+          'matchesPlayed': matchesPlayed,
+          'wins': wins,
+          'winStreak': winStreak,
+          'highestWinStreak': highestWinStreak,
+        });
+
+        // Update the local state to reflect new stats
+        setState(() {
+          userStats = {
+            'matchesPlayed': matchesPlayed,
+            'winPercentage': (wins / matchesPlayed) * 100,
+            'winStreak': winStreak,
+            'highestWinStreak': highestWinStreak,
+          };
+        });
+      }
+    });
+  }
 
   void handleReset() {
     setState(() {
