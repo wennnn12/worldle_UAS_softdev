@@ -64,6 +64,7 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
       setState(() {
         userStats = statsDoc.data();
       });
+    }
     user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
@@ -124,27 +125,27 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
     int startIndex = currentRow * 5;
     int endIndex = startIndex + 5;
 
-      bool isRowComplete = true;
-      for (int i = startIndex; i < endIndex; i++) {
-        if (gridContent[i].isEmpty) {
-          isRowComplete = false;
-          break;
-        }
+    bool isRowComplete = true;
+    for (int i = startIndex; i < endIndex; i++) {
+      if (gridContent[i].isEmpty) {
+        isRowComplete = false;
+        break;
       }
+    }
 
-      if (isRowComplete) {
-        attempts++;
-        bool hasWon = true;
+    if (isRowComplete) {
+      attempts++;
+      bool hasWon = true;
 
-        // First pass: Identify and mark correct letters (green)
-        Map<String, int> targetLetterCounts = {};
-        for (int i = 0; i < targetWord.length; i++) {
-          String letter = targetWord[i];
-          if (!targetLetterCounts.containsKey(letter)) {
-            targetLetterCounts[letter] = 0;
-          }
-          targetLetterCounts[letter] = targetLetterCounts[letter]! + 1;
+      // First pass: Identify and mark correct letters (green)
+      Map<String, int> targetLetterCounts = {};
+      for (int i = 0; i < targetWord.length; i++) {
+        String letter = targetWord[i];
+        if (!targetLetterCounts.containsKey(letter)) {
+          targetLetterCounts[letter] = 0;
         }
+        targetLetterCounts[letter] = targetLetterCounts[letter]! + 1;
+      }
 
       for (int i = 0; i < 5; i++) {
         if (gridContent[startIndex + i] == targetWord[i]) {
@@ -155,7 +156,9 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
           gridColors[startIndex + i] = Colors.grey;
           hasWon = false;
         }
+      }
 
+      // Second pass: Mark present but misplaced letters (yellow)
       for (int i = 0; i < 5; i++) {
         if (gridColors[startIndex + i] != Colors.green &&
             targetLetterCounts[gridContent[startIndex + i]] != null &&
@@ -164,6 +167,7 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
           targetLetterCounts[gridContent[startIndex + i]] =
               targetLetterCounts[gridContent[startIndex + i]]! - 1;
         }
+      }
 
       if (hasWon) {
         await _updateStats(true);
