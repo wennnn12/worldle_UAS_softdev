@@ -61,84 +61,83 @@ class _GameHardState extends State<GameHard> {
     });
   }
 
- void handleSubmit() {
-  setState(() {
-    int startIndex = currentRow * 5;
-    int endIndex = startIndex + 5;
+  void handleSubmit() {
+    setState(() {
+      int startIndex = currentRow * 5;
+      int endIndex = startIndex + 5;
 
-    bool isRowComplete = true;
-    for (int i = startIndex; i < endIndex; i++) {
-      if (gridContent[i].isEmpty) {
-        isRowComplete = false;
-        break;
-      }
-    }
-
-    if (isRowComplete) {
-      attempts++;
-      bool hasWon = true;
-
-      // First pass: Identify and mark correct letters (green)
-      Map<String, int> targetLetterCounts = {};
-      for (int i = 0; i < targetWord.length; i++) {
-        String letter = targetWord[i];
-        if (!targetLetterCounts.containsKey(letter)) {
-          targetLetterCounts[letter] = 0;
+      bool isRowComplete = true;
+      for (int i = startIndex; i < endIndex; i++) {
+        if (gridContent[i].isEmpty) {
+          isRowComplete = false;
+          break;
         }
-        targetLetterCounts[letter] = targetLetterCounts[letter]! + 1;
       }
 
-      for (int i = 0; i < 5; i++) {
-        if (gridContent[startIndex + i] == targetWord[i]) {
-          gridColors[startIndex + i] = Colors.green;
-          targetLetterCounts[gridContent[startIndex + i]] = targetLetterCounts[gridContent[startIndex + i]]! - 1;
+      if (isRowComplete) {
+        attempts++;
+        bool hasWon = true;
+
+        // First pass: Identify and mark correct letters (green)
+        Map<String, int> targetLetterCounts = {};
+        for (int i = 0; i < targetWord.length; i++) {
+          String letter = targetWord[i];
+          if (!targetLetterCounts.containsKey(letter)) {
+            targetLetterCounts[letter] = 0;
+          }
+          targetLetterCounts[letter] = targetLetterCounts[letter]! + 1;
+        }
+
+        for (int i = 0; i < 5; i++) {
+          if (gridContent[startIndex + i] == targetWord[i]) {
+            gridColors[startIndex + i] = Colors.green;
+            targetLetterCounts[gridContent[startIndex + i]] = targetLetterCounts[gridContent[startIndex + i]]! - 1;
+          } else {
+            gridColors[startIndex + i] = Colors.grey;
+            hasWon = false;
+          }
+        }
+
+        // Second pass: Identify correct letters in incorrect positions (yellow)
+        for (int i = 0; i < 5; i++) {
+          if (gridColors[startIndex + i] != Colors.green && targetLetterCounts[gridContent[startIndex + i]] != null && targetLetterCounts[gridContent[startIndex + i]]! > 0) {
+            gridColors[startIndex + i] = Colors.yellow;
+            targetLetterCounts[gridContent[startIndex + i]] = targetLetterCounts[gridContent[startIndex + i]]! - 1;
+          }
+        }
+
+        if (hasWon) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => ResultDialog(
+              hasWon: true,
+              attempts: attempts,
+              onRetry: () async {
+                await _fetchRandomWord();
+                handleReset();
+              },
+            ),
+          );
+        } else if (currentRow >= 3) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => ResultDialog(
+              hasWon: false,
+              attempts: attempts,
+              onRetry: () async {
+                await _fetchRandomWord();
+                handleReset();
+              },
+            ),
+          );
         } else {
-          gridColors[startIndex + i] = Colors.grey;
-          hasWon = false;
+          currentRow++;
         }
       }
-
-      // Second pass: Identify correct letters in incorrect positions (yellow)
-      for (int i = 0; i < 5; i++) {
-        if (gridColors[startIndex + i] != Colors.green && targetLetterCounts[gridContent[startIndex + i]] != null && targetLetterCounts[gridContent[startIndex + i]]! > 0) {
-          gridColors[startIndex + i] = Colors.yellow;
-          targetLetterCounts[gridContent[startIndex + i]] = targetLetterCounts[gridContent[startIndex + i]]! - 1;
-        }
-      }
-
-      if (hasWon) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => ResultDialog(
-            hasWon: true,
-            attempts: attempts,
-            onRetry: () async {
-              await _fetchRandomWord();
-              handleReset();
-            },
-          ),
-        );
-      } else if (currentRow >= 3) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => ResultDialog(
-            hasWon: false,
-            attempts: attempts,
-            onRetry: () async {
-              await _fetchRandomWord();
-              handleReset();
-            },
-          ),
-        );
-      } else {
-        currentRow++;
-      }
-    }
-  });
-}
-
+    });
+  }
 
   void handleReset() {
     setState(() {
@@ -156,6 +155,47 @@ class _GameHardState extends State<GameHard> {
         title: Text('Worldle'),
         centerTitle: true,
         elevation: 0,
+        leading: Builder(
+          builder: (BuildContext context) {
+            return IconButton(
+              icon: Icon(Icons.menu), // Hamburger icon
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
+            );
+          },
+        ),
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            DrawerHeader(
+              child: Text('Menu'),
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+            ),
+            ListTile(
+              title: Text('Item 1'),
+              onTap: () {
+                // Update the state of the app
+                // ...
+                // Then close the drawer
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: Text('Item 2'),
+              onTap: () {
+                // Update the state of the app
+                // ...
+                // Then close the drawer
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
       ),
       body: Column(
         children: [
