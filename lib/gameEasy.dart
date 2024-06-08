@@ -22,6 +22,9 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
   List<Color> gridColors = List.generate(30, (index) => Colors.red);
   int currentRow = 0;
   int attempts = 0;
+  bool isGuest = true;  // Assume user is a guest by default
+  User? currentUser;
+  Map<String, dynamic>? userStats; // Store user stats
 
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late AnimationController _animationController;
@@ -45,6 +48,22 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
   }
 
   Future<void> _checkUser() async {
+    currentUser = FirebaseAuth.instance.currentUser;
+    setState(() {
+      isGuest = currentUser == null;
+    });
+    if (!isGuest) {
+      await _fetchUserStats();
+    }
+  }
+
+  Future<void> _fetchUserStats() async {
+    final statsRef = FirebaseFirestore.instance.collection('users').doc(currentUser!.uid).collection('stats').doc('easy');
+    final statsDoc = await statsRef.get();
+    if (statsDoc.exists) {
+      setState(() {
+        userStats = statsDoc.data();
+      });
     user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
@@ -101,10 +120,9 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
     });
   }
 
-  void handleSubmit() {
-    setState(() {
-      int startIndex = currentRow * 5;
-      int endIndex = startIndex + 5;
+  Future<void> handleSubmit() async {
+    int startIndex = currentRow * 5;
+    int endIndex = startIndex + 5;
 
       bool isRowComplete = true;
       for (int i = startIndex; i < endIndex; i++) {
@@ -128,53 +146,94 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
           targetLetterCounts[letter] = targetLetterCounts[letter]! + 1;
         }
 
-        for (int i = 0; i < 5; i++) {
-          if (gridContent[startIndex + i] == targetWord[i]) {
-            gridColors[startIndex + i] = Colors.green;
-            targetLetterCounts[gridContent[startIndex + i]] = targetLetterCounts[gridContent[startIndex + i]]! - 1;
-          } else {
-            gridColors[startIndex + i] = Colors.grey;
-            hasWon = false;
-          }
-        }
-
-        // Second pass: Identify correct letters in incorrect positions (yellow)
-        for (int i = 0; i < 5; i++) {
-          if (gridColors[startIndex + i] != Colors.green && targetLetterCounts[gridContent[startIndex + i]] != null && targetLetterCounts[gridContent[startIndex + i]]! > 0) {
-            gridColors[startIndex + i] = Colors.yellow;
-            targetLetterCounts[gridContent[startIndex + i]] = targetLetterCounts[gridContent[startIndex + i]]! - 1;
-          }
-        }
-
-        if (hasWon) {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => ResultDialog(
-              hasWon: true,
-              attempts: attempts,
-              onRetry: () async {
-                await _fetchRandomWord();
-                handleReset();
-              },
-            ),
-          );
-        } else if (currentRow >= 5) {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => ResultDialog(
-              hasWon: false,
-              attempts: attempts,
-              onRetry: () async {
-                await _fetchRandomWord();
-                handleReset();
-              },
-            ),
-          );
+      for (int i = 0; i < 5; i++) {
+        if (gridContent[startIndex + i] == targetWord[i]) {
+          gridColors[startIndex + i] = Colors.green;
+          targetLetterCounts[gridContent[startIndex + i]] =
+              targetLetterCounts[gridContent[startIndex + i]]! - 1;
         } else {
-          currentRow++;
+          gridColors[startIndex + i] = Colors.grey;
+          hasWon = false;
         }
+
+      for (int i = 0; i < 5; i++) {
+        if (gridColors[startIndex + i] != Colors.green &&
+            targetLetterCounts[gridContent[startIndex + i]] != null &&
+            targetLetterCounts[gridContent[startIndex + i]]! > 0) {
+          gridColors[startIndex + i] = Colors.yellow;
+          targetLetterCounts[gridContent[startIndex + i]] =
+              targetLetterCounts[gridContent[startIndex + i]]! - 1;
+        }
+
+      if (hasWon) {
+        await _updateStats(true);
+        _showResultDialog(true);
+      } else if (currentRow >= 5) {
+        await _updateStats(false);
+        _showResultDialog(false);
+      } else {
+        setState(() {
+          currentRow++;
+        });
+      }
+    }
+  }
+
+  void _showResultDialog(bool hasWon) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => ResultDialog(
+        hasWon: hasWon,
+        attempts: attempts,
+        onRetry: () async {
+          await _fetchRandomWord();
+          handleReset();
+        },
+        stats: isGuest ? null : userStats, // Only show stats if user is not a guest
+        isGuest: isGuest,
+      ),
+    );
+  }
+
+  Future<void> _updateStats(bool hasWon) async {
+    if (isGuest) return;
+
+    final statsRef = FirebaseFirestore.instance.collection('users').doc(currentUser!.uid).collection('stats').doc('easy');
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final statsDoc = await transaction.get(statsRef);
+
+      if (!statsDoc.exists) {
+        transaction.set(statsRef, {
+          'matchesPlayed': 1,
+          'wins': hasWon ? 1 : 0,
+          'winStreak': hasWon ? 1 : 0,
+          'highestWinStreak': hasWon ? 1 : 0,
+        });
+      } else {
+        final data = statsDoc.data()!;
+        final matchesPlayed = data['matchesPlayed'] + 1;
+        final wins = data['wins'] + (hasWon ? 1 : 0);
+        final winStreak = hasWon ? data['winStreak'] + 1 : 0;
+        final highestWinStreak = hasWon && winStreak > data['highestWinStreak'] ? winStreak : data['highestWinStreak'];
+
+        transaction.update(statsRef, {
+          'matchesPlayed': matchesPlayed,
+          'wins': wins,
+          'winStreak': winStreak,
+          'highestWinStreak': highestWinStreak,
+        });
+
+        // Update the local state to reflect new stats
+        setState(() {
+          userStats = {
+            'matchesPlayed': matchesPlayed,
+            'winPercentage': (wins / matchesPlayed) * 100,
+            'winStreak': winStreak,
+            'highestWinStreak': highestWinStreak,
+          };
+        });
       }
     });
   }
