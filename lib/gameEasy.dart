@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'result_dialog.dart';
 import 'login.dart';  // Import the login.dart file
+import 'setting.dart';  // Import the setting.dart file
 
 class GameEasy extends StatefulWidget {
   final String initialTargetWord;
@@ -317,6 +318,10 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
                         onTap: () {
                           // Handle Setting tap
                           toggleDrawer();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => SettingPage()),
+                          );
                         },
                       ),
                       ListTile(

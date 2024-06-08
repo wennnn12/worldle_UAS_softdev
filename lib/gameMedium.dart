@@ -2,18 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'result_dialog.dart';
-import 'login.dart';  // Import the login.dart file
+import 'login.dart'; // Import the login.dart file
+import 'setting.dart'; // Add this import
 
 class GameMedium extends StatefulWidget {
   final String initialTargetWord;
 
-  const GameMedium({Key? key, required this.initialTargetWord}) : super(key: key);
+  const GameMedium({Key? key, required this.initialTargetWord})
+      : super(key: key);
 
   @override
   State<GameMedium> createState() => _GameMediumState();
 }
 
-class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateMixin {
+class _GameMediumState extends State<GameMedium>
+    with SingleTickerProviderStateMixin {
   late String targetWord;
   List<String> gridContent = List.generate(25, (index) => '');
   List<Color> gridColors = List.generate(25, (index) => Colors.red);
@@ -35,14 +38,18 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
       vsync: this,
       duration: Duration(milliseconds: 250),
     );
-    _slideAnimation = Tween<Offset>(begin: Offset(-1, 0), end: Offset(0, 0)).animate(_animationController);
+    _slideAnimation = Tween<Offset>(begin: Offset(-1, 0), end: Offset(0, 0))
+        .animate(_animationController);
     _checkUser();
   }
 
   Future<void> _checkUser() async {
     user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .get();
       setState(() {
         username = userDoc.get('username');
       });
@@ -50,7 +57,8 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
   }
 
   Future<void> _fetchRandomWord() async {
-    final wordList = await FirebaseFirestore.instance.collection('Wordlists').get();
+    final wordList =
+        await FirebaseFirestore.instance.collection('Wordlists').get();
     final words = wordList.docs.map((doc) => doc['word'] as String).toList();
     words.shuffle();
     setState(() {
@@ -116,7 +124,8 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
         for (int i = 0; i < 5; i++) {
           if (gridContent[startIndex + i] == targetWord[i]) {
             gridColors[startIndex + i] = Colors.green;
-            targetLetterCounts[gridContent[startIndex + i]] = targetLetterCounts[gridContent[startIndex + i]]! - 1;
+            targetLetterCounts[gridContent[startIndex + i]] =
+                targetLetterCounts[gridContent[startIndex + i]]! - 1;
           } else {
             gridColors[startIndex + i] = Colors.grey;
             hasWon = false;
@@ -125,9 +134,12 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
 
         // Second pass: Identify correct letters in incorrect positions (yellow)
         for (int i = 0; i < 5; i++) {
-          if (gridColors[startIndex + i] != Colors.green && targetLetterCounts[gridContent[startIndex + i]] != null && targetLetterCounts[gridContent[startIndex + i]]! > 0) {
+          if (gridColors[startIndex + i] != Colors.green &&
+              targetLetterCounts[gridContent[startIndex + i]] != null &&
+              targetLetterCounts[gridContent[startIndex + i]]! > 0) {
             gridColors[startIndex + i] = Colors.yellow;
-            targetLetterCounts[gridContent[startIndex + i]] = targetLetterCounts[gridContent[startIndex + i]]! - 1;
+            targetLetterCounts[gridContent[startIndex + i]] =
+                targetLetterCounts[gridContent[startIndex + i]]! - 1;
           }
         }
 
@@ -266,12 +278,14 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
                             children: [
                               ElevatedButton(
                                 onPressed: handleSubmit,
-                                child: Text('Submit', style: TextStyle(fontSize: 18)),
+                                child: Text('Submit',
+                                    style: TextStyle(fontSize: 18)),
                               ),
                               SizedBox(width: 20),
                               ElevatedButton(
                                 onPressed: handleReset,
-                                child: Text('Reset', style: TextStyle(fontSize: 18)),
+                                child: Text('Reset',
+                                    style: TextStyle(fontSize: 18)),
                               ),
                             ],
                           ),
@@ -315,8 +329,12 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
                         leading: Icon(Icons.settings),
                         title: Text('Setting'),
                         onTap: () {
-                          // Handle Setting tap
                           toggleDrawer();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => SettingPage()),
+                          );
                         },
                       ),
                       ListTile(
@@ -334,7 +352,8 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
                               toggleDrawer();
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => LoginPage()),
+                                MaterialPageRoute(
+                                    builder: (context) => LoginPage()),
                               );
                             } else {
                               _logout();
@@ -343,8 +362,12 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
                           },
                           child: Text(user == null ? 'Login' : 'Logout'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: user == null ? Colors.white : Colors.red, // Background color
-                            foregroundColor: user == null ? Colors.black : Colors.white, // Text color
+                            backgroundColor: user == null
+                                ? Colors.white
+                                : Colors.red, // Background color
+                            foregroundColor: user == null
+                                ? Colors.black
+                                : Colors.white, // Text color
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
@@ -369,7 +392,8 @@ class Grid extends StatelessWidget {
   final List<String> gridContent;
   final List<Color> gridColors;
 
-  const Grid({required this.gridContent, required this.gridColors, Key? key}) : super(key: key);
+  const Grid({required this.gridContent, required this.gridColors, Key? key})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -401,14 +425,39 @@ class Keyboard extends StatelessWidget {
   final Function(String) onKeyPressed;
   final Function() onDeletePressed;
 
-  const Keyboard({required this.onKeyPressed, required this.onDeletePressed, Key? key}) : super(key: key);
+  const Keyboard(
+      {required this.onKeyPressed, required this.onDeletePressed, Key? key})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final List<String> keys = [
-      'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
-      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L',
-      'Z', 'X', 'C', 'V', 'B', 'N', 'M'
+      'Q',
+      'W',
+      'E',
+      'R',
+      'T',
+      'Y',
+      'U',
+      'I',
+      'O',
+      'P',
+      'A',
+      'S',
+      'D',
+      'F',
+      'G',
+      'H',
+      'J',
+      'K',
+      'L',
+      'Z',
+      'X',
+      'C',
+      'V',
+      'B',
+      'N',
+      'M'
     ];
 
     return Column(

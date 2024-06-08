@@ -77,6 +77,10 @@ class _SettingPageState extends State<SettingPage> {
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _applySettings,
+        child: Icon(Icons.check),
+      ),
     );
   }
 
@@ -92,11 +96,28 @@ class _SettingPageState extends State<SettingPage> {
         return 'Easy';
     }
   }
-}
 
+  void _applySettings() {
+    Widget targetPage;
 
-void main() {
-  runApp(MaterialApp(
-    home: SettingPage(),
-  ));
+    switch (_difficultyLevel) {
+      case 0:
+        targetPage = GameEasy(initialTargetWord: 'example'); // Provide the initial target word
+        break;
+      case 1:
+        targetPage = GameMedium(initialTargetWord: 'example'); // Provide the initial target word
+        break;
+      case 2:
+        targetPage = GameHard(initialTargetWord: 'example'); // Provide the initial target word
+        break;
+      default:
+        targetPage = GameEasy(initialTargetWord: 'example'); // Provide the initial target word
+        break;
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => targetPage),
+    );
+  }
 }
