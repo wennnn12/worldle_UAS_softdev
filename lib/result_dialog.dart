@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'guessBarChart.dart';
 
 class ResultDialog extends StatelessWidget {
   final bool hasWon;
@@ -6,6 +7,8 @@ class ResultDialog extends StatelessWidget {
   final Future<void> Function() onRetry;
   final Map<String, dynamic>? stats; 
   final bool isGuest;
+  final Map<int, int> guessStats;
+  final int barsCount;
 
   const ResultDialog({
     required this.hasWon,
@@ -13,6 +16,8 @@ class ResultDialog extends StatelessWidget {
     required this.onRetry,
     this.stats,
     this.isGuest = true,
+    required this.guessStats,
+    required this.barsCount,
     Key? key,
   }) : super(key: key);
 
@@ -49,7 +54,7 @@ class ResultDialog extends StatelessWidget {
                     : Text('No statistics available'),
                 SizedBox(height: 20),
                 Text('GUESSES'),
-                // Add guesses bar chart here if needed
+                GuessStatsBarChart(guessStats: guessStats, barsCount: barsCount),
               ],
             ),
       actions: [
