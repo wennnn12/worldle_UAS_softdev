@@ -2,29 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'result_dialog.dart';
-import 'login.dart'; // Import the login.dart file
-import 'setting.dart'; // Add this import
-import 'mainmenu.dart'; // Add this import
+import 'login.dart';
+import 'setting.dart';
+import 'mainmenu.dart';
 
 class GameMedium extends StatefulWidget {
   final String initialTargetWord;
   final Function(bool) toggleTheme;
 
-  const GameMedium(
-      {Key? key, required this.initialTargetWord, required this.toggleTheme})
-      : super(key: key);
+  const GameMedium({Key? key, required this.initialTargetWord, required this.toggleTheme}) : super(key: key);
 
   @override
   State<GameMedium> createState() => _GameMediumState();
 }
 
-class _GameMediumState extends State<GameMedium>
-    with SingleTickerProviderStateMixin {
+class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateMixin {
   late String targetWord;
   List<String> gridContent = List.generate(25, (index) => '');
   List<Color> gridColors = List.generate(25, (index) => Colors.red);
   int currentRow = 0;
   int attempts = 0;
+  bool isGuest = true;
+  User? currentUser;
+  Map<String, dynamic>? userStats;
 
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late AnimationController _animationController;
@@ -43,18 +43,31 @@ class _GameMediumState extends State<GameMedium>
       vsync: this,
       duration: Duration(milliseconds: 250),
     );
-    _slideAnimation = Tween<Offset>(begin: Offset(-1, 0), end: Offset(0, 0))
-        .animate(_animationController);
+    _slideAnimation = Tween<Offset>(begin: Offset(-1, 0), end: Offset(0, 0)).animate(_animationController);
     _checkUser();
   }
 
   Future<void> _checkUser() async {
+    currentUser = FirebaseAuth.instance.currentUser;
+    setState(() {
+      isGuest = currentUser == null;
+    });
+    if (!isGuest) {
+      await _fetchUserStats();
+    }
+  }
+
+  Future<void> _fetchUserStats() async {
+    final statsRef = FirebaseFirestore.instance.collection('users').doc(currentUser!.uid).collection('stats').doc('medium');
+    final statsDoc = await statsRef.get();
+    if (statsDoc.exists) {
+      setState(() {
+        userStats = statsDoc.data();
+      });
+    }
     user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user!.uid)
-          .get();
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
       setState(() {
         username = userDoc.get('username');
         _difficultyLevel = userDoc.get('difficultyLevel') ?? 0;
@@ -70,58 +83,8 @@ class _GameMediumState extends State<GameMedium>
     }
   }
 
-  Future<void> _saveUserSettings() async {
-    if (user != null) {
-      await FirebaseFirestore.instance.collection('users').doc(user!.uid).set({
-        'difficultyLevel': _difficultyLevel,
-        'isDarkMode': _isDarkMode,
-      }, SetOptions(merge: true));
-    }
-  }
-
-  Future<void> _logout() async {
-    await FirebaseAuth.instance.signOut();
-    setState(() {
-      user = null;
-      username = null;
-      _difficultyLevel = 0;
-      _isDarkMode = false;
-    });
-    await _saveUserSettings();
-    widget.toggleTheme(false);
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-          builder: (context) => MainMenu(toggleTheme: widget.toggleTheme)),
-    );
-  }
-
-  void _showLoginPopup(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return GestureDetector(
-          onTap: () => Navigator.of(context).pop(),
-          child: AlertDialog(
-            title: Text("You are not logged in"),
-            content: Text("Please login first."),
-            actions: [
-              TextButton(
-                child: Text("Okay"),
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close the dialog
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   Future<void> _fetchRandomWord() async {
-    final wordList =
-        await FirebaseFirestore.instance.collection('Wordlists').get();
+    final wordList = await FirebaseFirestore.instance.collection('Wordlists').get();
     final words = wordList.docs.map((doc) => doc['word'] as String).toList();
     words.shuffle();
     setState(() {
@@ -157,84 +120,123 @@ class _GameMediumState extends State<GameMedium>
     });
   }
 
-  void handleSubmit() {
-    setState(() {
-      int startIndex = currentRow * 5;
-      int endIndex = startIndex + 5;
+  Future<void> handleSubmit() async {
+    int startIndex = currentRow * 5;
+    int endIndex = startIndex + 5;
 
-      bool isRowComplete = true;
-      for (int i = startIndex; i < endIndex; i++) {
-        if (gridContent[i].isEmpty) {
-          isRowComplete = false;
-          break;
+    bool isRowComplete = true;
+    for (int i = startIndex; i < endIndex; i++) {
+      if (gridContent[i].isEmpty) {
+        isRowComplete = false;
+        break;
+      }
+    }
+
+    if (isRowComplete) {
+      attempts++;
+      bool hasWon = true;
+
+      // First pass: Identify and mark correct letters (green)
+      Map<String, int> targetLetterCounts = {};
+      for (int i = 0; i < targetWord.length; i++) {
+        String letter = targetWord[i];
+        if (!targetLetterCounts.containsKey(letter)) {
+          targetLetterCounts[letter] = 0;
+        }
+        targetLetterCounts[letter] = targetLetterCounts[letter]! + 1;
+      }
+
+      for (int i = 0; i < 5; i++) {
+        if (gridContent[startIndex + i] == targetWord[i]) {
+          gridColors[startIndex + i] = Colors.green;
+          targetLetterCounts[gridContent[startIndex + i]] =
+              targetLetterCounts[gridContent[startIndex + i]]! - 1;
+        } else {
+          gridColors[startIndex + i] = Colors.grey;
+          hasWon = false;
         }
       }
 
-      if (isRowComplete) {
-        attempts++;
-        bool hasWon = true;
-
-        // First pass: Identify and mark correct letters (green)
-        Map<String, int> targetLetterCounts = {};
-        for (int i = 0; i < targetWord.length; i++) {
-          String letter = targetWord[i];
-          if (!targetLetterCounts.containsKey(letter)) {
-            targetLetterCounts[letter] = 0;
-          }
-          targetLetterCounts[letter] = targetLetterCounts[letter]! + 1;
+      // Second pass: Mark present but misplaced letters (yellow)
+      for (int i = 0; i < 5; i++) {
+        if (gridColors[startIndex + i] != Colors.green &&
+            targetLetterCounts[gridContent[startIndex + i]] != null &&
+            targetLetterCounts[gridContent[startIndex + i]]! > 0) {
+          gridColors[startIndex + i] = Colors.yellow;
+          targetLetterCounts[gridContent[startIndex + i]] =
+              targetLetterCounts[gridContent[startIndex + i]]! - 1;
         }
+      }
 
-        for (int i = 0; i < 5; i++) {
-          if (gridContent[startIndex + i] == targetWord[i]) {
-            gridColors[startIndex + i] = Colors.green;
-            targetLetterCounts[gridContent[startIndex + i]] =
-                targetLetterCounts[gridContent[startIndex + i]]! - 1;
-          } else {
-            gridColors[startIndex + i] = Colors.grey;
-            hasWon = false;
-          }
-        }
-
-        // Second pass: Identify correct letters in incorrect positions (yellow)
-        for (int i = 0; i < 5; i++) {
-          if (gridColors[startIndex + i] != Colors.green &&
-              targetLetterCounts[gridContent[startIndex + i]] != null &&
-              targetLetterCounts[gridContent[startIndex + i]]! > 0) {
-            gridColors[startIndex + i] = Colors.yellow;
-            targetLetterCounts[gridContent[startIndex + i]] =
-                targetLetterCounts[gridContent[startIndex + i]]! - 1;
-          }
-        }
-
-        if (hasWon) {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => ResultDialog(
-              hasWon: true,
-              attempts: attempts,
-              onRetry: () async {
-                await _fetchRandomWord();
-                handleReset();
-              },
-            ),
-          );
-        } else if (currentRow >= 4) {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => ResultDialog(
-              hasWon: false,
-              attempts: attempts,
-              onRetry: () async {
-                await _fetchRandomWord();
-                handleReset();
-              },
-            ),
-          );
-        } else {
+      if (hasWon) {
+        await _updateStats(true);
+        _showResultDialog(true);
+      } else if (currentRow >= 4) {
+        await _updateStats(false);
+        _showResultDialog(false);
+      } else {
+        setState(() {
           currentRow++;
-        }
+        });
+      }
+    }
+  }
+
+  void _showResultDialog(bool hasWon) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => ResultDialog(
+        hasWon: hasWon,
+        attempts: attempts,
+        onRetry: () async {
+          await _fetchRandomWord();
+          handleReset();
+        },
+        stats: isGuest ? null : userStats,
+        isGuest: isGuest,
+      ),
+    );
+  }
+
+  Future<void> _updateStats(bool hasWon) async {
+    if (isGuest) return;
+
+    final statsRef = FirebaseFirestore.instance.collection('users').doc(currentUser!.uid).collection('stats').doc('medium');
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final statsDoc = await transaction.get(statsRef);
+
+      if (!statsDoc.exists) {
+        transaction.set(statsRef, {
+          'matchesPlayed': 1,
+          'wins': hasWon ? 1 : 0,
+          'winStreak': hasWon ? 1 : 0,
+          'highestWinStreak': hasWon ? 1 : 0,
+        });
+      } else {
+        final data = statsDoc.data()!;
+        final matchesPlayed = data['matchesPlayed'] + 1;
+        final wins = data['wins'] + (hasWon ? 1 : 0);
+        final winStreak = hasWon ? data['winStreak'] + 1 : 0;
+        final highestWinStreak = hasWon && winStreak > data['highestWinStreak'] ? winStreak : data['highestWinStreak'];
+
+        transaction.update(statsRef, {
+          'matchesPlayed': matchesPlayed,
+          'wins': wins,
+          'winStreak': winStreak,
+          'highestWinStreak': highestWinStreak,
+        });
+
+        // Update the local state to reflect new stats
+        setState(() {
+          userStats = {
+            'matchesPlayed': matchesPlayed,
+            'winPercentage': (wins / matchesPlayed) * 100,
+            'winStreak': winStreak,
+            'highestWinStreak': highestWinStreak,
+          };
+        });
       }
     });
   }
@@ -258,6 +260,55 @@ class _GameMediumState extends State<GameMedium>
         _isDrawerOpen = false;
       }
     });
+  }
+
+  Future<void> _logout() async {
+    await FirebaseAuth.instance.signOut();
+    setState(() {
+      user = null;
+      username = null;
+      // Revert settings to default (easy mode)
+      _difficultyLevel = 0;
+      _isDarkMode = false;
+    });
+    await _saveUserSettings(); // Save settings on logout
+    widget.toggleTheme(false); // Revert to light theme on logout
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => MainMenu(toggleTheme: widget.toggleTheme)),
+    );
+  }
+
+  Future<void> _saveUserSettings() async {
+    if (user != null) {
+      await FirebaseFirestore.instance.collection('users').doc(user!.uid).set({
+        'difficultyLevel': _difficultyLevel,
+        'isDarkMode': _isDarkMode,
+      }, SetOptions(merge: true));
+    }
+  }
+
+  void _showLoginPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: AlertDialog(
+            title: Text("You are not logged in"),
+            content: Text("Please login first."),
+            actions: [
+              TextButton(
+                child: Text("Okay"),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -334,14 +385,12 @@ class _GameMediumState extends State<GameMedium>
                             children: [
                               ElevatedButton(
                                 onPressed: handleSubmit,
-                                child: Text('Submit',
-                                    style: TextStyle(fontSize: 18)),
+                                child: Text('Submit', style: TextStyle(fontSize: 18)),
                               ),
                               SizedBox(width: 20),
                               ElevatedButton(
                                 onPressed: handleReset,
-                                child: Text('Reset',
-                                    style: TextStyle(fontSize: 18)),
+                                child: Text('Reset', style: TextStyle(fontSize: 18)),
                               ),
                             ],
                           ),
@@ -374,24 +423,15 @@ class _GameMediumState extends State<GameMedium>
                   child: Column(
                     children: [
                       ListTile(
-                        leading: Icon(Icons.help_outline,
-                            color: _isDarkMode ? Colors.white : Colors.black),
-                        title: Text('Learn?',
-                            style: TextStyle(
-                                color:
-                                    _isDarkMode ? Colors.white : Colors.black)),
+                        leading: Icon(Icons.help_outline, color: _isDarkMode ? Colors.white : Colors.black),
+                        title: Text('Learn?', style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black)),
                         onTap: () {
-                          // Handle Learn tap
                           toggleDrawer();
                         },
                       ),
                       ListTile(
-                        leading: Icon(Icons.settings,
-                            color: _isDarkMode ? Colors.white : Colors.black),
-                        title: Text('Setting',
-                            style: TextStyle(
-                                color:
-                                    _isDarkMode ? Colors.white : Colors.black)),
+                        leading: Icon(Icons.settings, color: _isDarkMode ? Colors.white : Colors.black),
+                        title: Text('Setting', style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black)),
                         onTap: () {
                           toggleDrawer();
                           if (user == null) {
@@ -399,20 +439,14 @@ class _GameMediumState extends State<GameMedium>
                           } else {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                  builder: (context) => SettingPage(
-                                      toggleTheme: widget.toggleTheme)),
+                              MaterialPageRoute(builder: (context) => SettingPage(toggleTheme: widget.toggleTheme)),
                             );
                           }
                         },
                       ),
                       ListTile(
-                        leading: Icon(Icons.history,
-                            color: _isDarkMode ? Colors.white : Colors.black),
-                        title: Text('History',
-                            style: TextStyle(
-                                color:
-                                    _isDarkMode ? Colors.white : Colors.black)),
+                        leading: Icon(Icons.history, color: _isDarkMode ? Colors.white : Colors.black),
+                        title: Text('History', style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black)),
                         onTap: () {
                           toggleDrawer();
                         },
@@ -424,9 +458,7 @@ class _GameMediumState extends State<GameMedium>
                               toggleDrawer();
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(
-                                    builder: (context) => LoginPage(
-                                        toggleTheme: widget.toggleTheme)),
+                                MaterialPageRoute(builder: (context) => LoginPage(toggleTheme: widget.toggleTheme)),
                               );
                             } else {
                               _logout();
@@ -435,10 +467,8 @@ class _GameMediumState extends State<GameMedium>
                           },
                           child: Text(user == null ? 'Login' : 'Logout'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                user == null ? Colors.white : Colors.red,
-                            foregroundColor:
-                                user == null ? Colors.black : Colors.white,
+                            backgroundColor: user == null ? Colors.white : Colors.red,
+                            foregroundColor: user == null ? Colors.black : Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
@@ -463,8 +493,7 @@ class Grid extends StatelessWidget {
   final List<String> gridContent;
   final List<Color> gridColors;
 
-  const Grid({required this.gridContent, required this.gridColors, Key? key})
-      : super(key: key);
+  const Grid({required this.gridContent, required this.gridColors, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -496,39 +525,14 @@ class Keyboard extends StatelessWidget {
   final Function(String) onKeyPressed;
   final Function() onDeletePressed;
 
-  const Keyboard(
-      {required this.onKeyPressed, required this.onDeletePressed, Key? key})
-      : super(key: key);
+  const Keyboard({required this.onKeyPressed, required this.onDeletePressed, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final List<String> keys = [
-      'Q',
-      'W',
-      'E',
-      'R',
-      'T',
-      'Y',
-      'U',
-      'I',
-      'O',
-      'P',
-      'A',
-      'S',
-      'D',
-      'F',
-      'G',
-      'H',
-      'J',
-      'K',
-      'L',
-      'Z',
-      'X',
-      'C',
-      'V',
-      'B',
-      'N',
-      'M'
+      'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
+      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L',
+      'Z', 'X', 'C', 'V', 'B', 'N', 'M'
     ];
 
     return Column(
