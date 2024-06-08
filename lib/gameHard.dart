@@ -10,19 +10,22 @@ class GameHard extends StatefulWidget {
   final String initialTargetWord;
   final Function(bool) toggleTheme;
 
-  const GameHard({Key? key, required this.initialTargetWord, required this.toggleTheme}) : super(key: key);
+  const GameHard(
+      {Key? key, required this.initialTargetWord, required this.toggleTheme})
+      : super(key: key);
 
   @override
   State<GameHard> createState() => _GameHardState();
 }
 
-class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin {
+class _GameHardState extends State<GameHard>
+    with SingleTickerProviderStateMixin {
   late String targetWord;
   List<String> gridContent = List.generate(20, (index) => '');
   List<Color> gridColors = List.generate(20, (index) => Colors.red);
   int currentRow = 0;
   int attempts = 0;
-  bool isGuest = true;  // Assume user is a guest by default
+  bool isGuest = true; // Assume user is a guest by default
   User? currentUser;
   Map<String, dynamic>? userStats; // Store user stats
 
@@ -43,7 +46,8 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
       vsync: this,
       duration: Duration(milliseconds: 250),
     );
-    _slideAnimation = Tween<Offset>(begin: Offset(-1, 0), end: Offset(0, 0)).animate(_animationController);
+    _slideAnimation = Tween<Offset>(begin: Offset(-1, 0), end: Offset(0, 0))
+        .animate(_animationController);
     _checkUser();
   }
 
@@ -58,7 +62,11 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
   }
 
   Future<void> _fetchUserStats() async {
-    final statsRef = FirebaseFirestore.instance.collection('users').doc(currentUser!.uid).collection('stats').doc('hard');
+    final statsRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser!.uid)
+        .collection('stats')
+        .doc('hard');
     final statsDoc = await statsRef.get();
     if (statsDoc.exists) {
       setState(() {
@@ -67,7 +75,10 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
     }
     user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .get();
       setState(() {
         username = userDoc.get('username');
         _difficultyLevel = userDoc.get('difficultyLevel') ?? 0;
@@ -85,7 +96,8 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
   }
 
   Future<void> _fetchRandomWord() async {
-    final wordList = await FirebaseFirestore.instance.collection('Wordlists').get();
+    final wordList =
+        await FirebaseFirestore.instance.collection('Wordlists').get();
     final words = wordList.docs.map((doc) => doc['word'] as String).toList();
     words.shuffle();
     setState(() {
@@ -183,7 +195,35 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
     }
   }
 
-  void _showResultDialog(bool hasWon) {
+  Future<Map<int, int>> _fetchGuessStats(String difficulty) async {
+    if (isGuest) return {};
+
+    final guessStatsRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser!.uid)
+        .collection('guessStats')
+        .doc(difficulty)
+        .collection('games');
+    final guessStatsDocs = await guessStatsRef.get();
+    Map<int, int> guessStats = {};
+
+    for (var doc in guessStatsDocs.docs) {
+      int attempts = doc['attempts'];
+      if (guessStats.containsKey(attempts)) {
+        guessStats[attempts] = guessStats[attempts]! + 1;
+      } else {
+        guessStats[attempts] = 1;
+      }
+    }
+
+    return guessStats;
+  }
+
+  void _showResultDialog(bool hasWon) async {
+    String difficulty = 'hard'; // Replace with current difficulty
+    int barsCount = 4; // 4 bars for hard difficulty
+    Map<int, int> guessStats = await _fetchGuessStats(difficulty);
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -194,8 +234,12 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
           await _fetchRandomWord();
           handleReset();
         },
-        stats: isGuest ? null : userStats, // Only show stats if user is not a guest
+        stats: isGuest
+            ? null
+            : userStats, // Only show stats if user is not a guest
         isGuest: isGuest,
+        guessStats: guessStats,
+        barsCount: barsCount,
       ),
     );
   }
@@ -203,7 +247,19 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
   Future<void> _updateStats(bool hasWon) async {
     if (isGuest) return;
 
-    final statsRef = FirebaseFirestore.instance.collection('users').doc(currentUser!.uid).collection('stats').doc('hard');
+    final difficulty = 'hard'; // Replace with current difficulty
+    final statsRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser!.uid)
+        .collection('stats')
+        .doc(difficulty);
+    final guessStatsRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser!.uid)
+        .collection('guessStats')
+        .doc(difficulty)
+        .collection('games')
+        .doc();
 
     await FirebaseFirestore.instance.runTransaction((transaction) async {
       final statsDoc = await transaction.get(statsRef);
@@ -220,7 +276,9 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
         final matchesPlayed = data['matchesPlayed'] + 1;
         final wins = data['wins'] + (hasWon ? 1 : 0);
         final winStreak = hasWon ? data['winStreak'] + 1 : 0;
-        final highestWinStreak = hasWon && winStreak > data['highestWinStreak'] ? winStreak : data['highestWinStreak'];
+        final highestWinStreak = hasWon && winStreak > data['highestWinStreak']
+            ? winStreak
+            : data['highestWinStreak'];
 
         transaction.update(statsRef, {
           'matchesPlayed': matchesPlayed,
@@ -237,6 +295,13 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
             'winStreak': winStreak,
             'highestWinStreak': highestWinStreak,
           };
+        });
+      }
+
+      if (hasWon) {
+        transaction.set(guessStatsRef, {
+          'attempts': attempts,
+          'timestamp': FieldValue.serverTimestamp(),
         });
       }
     });
@@ -276,7 +341,8 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
     widget.toggleTheme(false); // Revert to light theme on logout
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => MainMenu(toggleTheme: widget.toggleTheme)),
+      MaterialPageRoute(
+          builder: (context) => MainMenu(toggleTheme: widget.toggleTheme)),
     );
   }
 
@@ -386,12 +452,14 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
                             children: [
                               ElevatedButton(
                                 onPressed: handleSubmit,
-                                child: Text('Submit', style: TextStyle(fontSize: 18)),
+                                child: Text('Submit',
+                                    style: TextStyle(fontSize: 18)),
                               ),
                               SizedBox(width: 20),
                               ElevatedButton(
                                 onPressed: handleReset,
-                                child: Text('Reset', style: TextStyle(fontSize: 18)),
+                                child: Text('Reset',
+                                    style: TextStyle(fontSize: 18)),
                               ),
                             ],
                           ),
@@ -424,15 +492,23 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
                   child: Column(
                     children: [
                       ListTile(
-                        leading: Icon(Icons.help_outline, color: _isDarkMode ? Colors.white : Colors.black),
-                        title: Text('Learn?', style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black)),
+                        leading: Icon(Icons.help_outline,
+                            color: _isDarkMode ? Colors.white : Colors.black),
+                        title: Text('Learn?',
+                            style: TextStyle(
+                                color:
+                                    _isDarkMode ? Colors.white : Colors.black)),
                         onTap: () {
                           toggleDrawer();
                         },
                       ),
                       ListTile(
-                        leading: Icon(Icons.settings, color: _isDarkMode ? Colors.white : Colors.black),
-                        title: Text('Setting', style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black)),
+                        leading: Icon(Icons.settings,
+                            color: _isDarkMode ? Colors.white : Colors.black),
+                        title: Text('Setting',
+                            style: TextStyle(
+                                color:
+                                    _isDarkMode ? Colors.white : Colors.black)),
                         onTap: () {
                           toggleDrawer();
                           if (user == null) {
@@ -440,14 +516,20 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
                           } else {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => SettingPage(toggleTheme: widget.toggleTheme)),
+                              MaterialPageRoute(
+                                  builder: (context) => SettingPage(
+                                      toggleTheme: widget.toggleTheme)),
                             );
                           }
                         },
                       ),
                       ListTile(
-                        leading: Icon(Icons.history, color: _isDarkMode ? Colors.white : Colors.black),
-                        title: Text('History', style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black)),
+                        leading: Icon(Icons.history,
+                            color: _isDarkMode ? Colors.white : Colors.black),
+                        title: Text('History',
+                            style: TextStyle(
+                                color:
+                                    _isDarkMode ? Colors.white : Colors.black)),
                         onTap: () {
                           toggleDrawer();
                         },
@@ -459,7 +541,9 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
                               toggleDrawer();
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => LoginPage(toggleTheme: widget.toggleTheme)),
+                                MaterialPageRoute(
+                                    builder: (context) => LoginPage(
+                                        toggleTheme: widget.toggleTheme)),
                               );
                             } else {
                               _logout();
@@ -468,8 +552,10 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
                           },
                           child: Text(user == null ? 'Login' : 'Logout'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: user == null ? Colors.white : Colors.red,
-                            foregroundColor: user == null ? Colors.black : Colors.white,
+                            backgroundColor:
+                                user == null ? Colors.white : Colors.red,
+                            foregroundColor:
+                                user == null ? Colors.black : Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
@@ -494,7 +580,8 @@ class Grid extends StatelessWidget {
   final List<String> gridContent;
   final List<Color> gridColors;
 
-  const Grid({required this.gridContent, required this.gridColors, Key? key}) : super(key: key);
+  const Grid({required this.gridContent, required this.gridColors, Key? key})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -526,14 +613,39 @@ class Keyboard extends StatelessWidget {
   final Function(String) onKeyPressed;
   final Function() onDeletePressed;
 
-  const Keyboard({required this.onKeyPressed, required this.onDeletePressed, Key? key}) : super(key: key);
+  const Keyboard(
+      {required this.onKeyPressed, required this.onDeletePressed, Key? key})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final List<String> keys = [
-      'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
-      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L',
-      'Z', 'X', 'C', 'V', 'B', 'N', 'M'
+      'Q',
+      'W',
+      'E',
+      'R',
+      'T',
+      'Y',
+      'U',
+      'I',
+      'O',
+      'P',
+      'A',
+      'S',
+      'D',
+      'F',
+      'G',
+      'H',
+      'J',
+      'K',
+      'L',
+      'Z',
+      'X',
+      'C',
+      'V',
+      'B',
+      'N',
+      'M'
     ];
 
     return Column(

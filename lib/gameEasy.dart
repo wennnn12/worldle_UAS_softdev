@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'result_dialog.dart';
 import 'login.dart';
-import 'mainmenu.dart'; // Ensure this import is present
+import 'mainmenu.dart';
 import 'setting.dart';
 
 class GameEasy extends StatefulWidget {
@@ -183,64 +183,99 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
     }
   }
 
-  void _showResultDialog(bool hasWon) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => ResultDialog(
-        hasWon: hasWon,
-        attempts: attempts,
-        onRetry: () async {
-          await _fetchRandomWord();
-          handleReset();
-        },
-        stats: isGuest ? null : userStats, // Only show stats if user is not a guest
-        isGuest: isGuest,
-      ),
-    );
+Future<Map<int, int>> _fetchGuessStats(String difficulty) async {
+  if (isGuest) return {};
+
+  final guessStatsRef = FirebaseFirestore.instance.collection('users').doc(currentUser!.uid).collection('guessStats').doc(difficulty).collection('games');
+  final guessStatsDocs = await guessStatsRef.get();
+  Map<int, int> guessStats = {};
+
+  for (var doc in guessStatsDocs.docs) {
+    int attempts = doc['attempts'];
+    if (guessStats.containsKey(attempts)) {
+      guessStats[attempts] = guessStats[attempts]! + 1;
+    } else {
+      guessStats[attempts] = 1;
+    }
   }
 
-  Future<void> _updateStats(bool hasWon) async {
-    if (isGuest) return;
+  return guessStats;
+}
 
-    final statsRef = FirebaseFirestore.instance.collection('users').doc(currentUser!.uid).collection('stats').doc('easy');
+void _showResultDialog(bool hasWon) async {
+  String difficulty = 'easy'; // Replace with current difficulty
+  int barsCount = difficulty == 'easy' ? 6 : difficulty == 'medium' ? 5 : 4;
+  Map<int, int> guessStats = await _fetchGuessStats(difficulty);
 
-    await FirebaseFirestore.instance.runTransaction((transaction) async {
-      final statsDoc = await transaction.get(statsRef);
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => ResultDialog(
+      hasWon: hasWon,
+      attempts: attempts,
+      onRetry: () async {
+        await _fetchRandomWord();
+        handleReset();
+      },
+      stats: isGuest ? null : userStats, // Only show stats if user is not a guest
+      isGuest: isGuest,
+      guessStats: guessStats,
+      barsCount: barsCount,
+    ),
+  );
+}
 
-      if (!statsDoc.exists) {
-        transaction.set(statsRef, {
-          'matchesPlayed': 1,
-          'wins': hasWon ? 1 : 0,
-          'winStreak': hasWon ? 1 : 0,
-          'highestWinStreak': hasWon ? 1 : 0,
-        });
-      } else {
-        final data = statsDoc.data()!;
-        final matchesPlayed = data['matchesPlayed'] + 1;
-        final wins = data['wins'] + (hasWon ? 1 : 0);
-        final winStreak = hasWon ? data['winStreak'] + 1 : 0;
-        final highestWinStreak = hasWon && winStreak > data['highestWinStreak'] ? winStreak : data['highestWinStreak'];
+Future<void> _updateStats(bool hasWon) async {
+  if (isGuest) return;
 
-        transaction.update(statsRef, {
+  final difficulty = 'easy'; // Replace with current difficulty
+  final statsRef = FirebaseFirestore.instance.collection('users').doc(currentUser!.uid).collection('stats').doc(difficulty);
+  final guessStatsRef = FirebaseFirestore.instance.collection('users').doc(currentUser!.uid).collection('guessStats').doc(difficulty).collection('games').doc();
+
+  await FirebaseFirestore.instance.runTransaction((transaction) async {
+    final statsDoc = await transaction.get(statsRef);
+
+    if (!statsDoc.exists) {
+      transaction.set(statsRef, {
+        'matchesPlayed': 1,
+        'wins': hasWon ? 1 : 0,
+        'winStreak': hasWon ? 1 : 0,
+        'highestWinStreak': hasWon ? 1 : 0,
+      });
+    } else {
+      final data = statsDoc.data()!;
+      final matchesPlayed = data['matchesPlayed'] + 1;
+      final wins = data['wins'] + (hasWon ? 1 : 0);
+      final winStreak = hasWon ? data['winStreak'] + 1 : 0;
+      final highestWinStreak = hasWon && winStreak > data['highestWinStreak'] ? winStreak : data['highestWinStreak'];
+
+      transaction.update(statsRef, {
+        'matchesPlayed': matchesPlayed,
+        'wins': wins,
+        'winStreak': winStreak,
+        'highestWinStreak': highestWinStreak,
+      });
+
+      // Update the local state to reflect new stats
+      setState(() {
+        userStats = {
           'matchesPlayed': matchesPlayed,
-          'wins': wins,
+          'winPercentage': (wins / matchesPlayed) * 100,
           'winStreak': winStreak,
           'highestWinStreak': highestWinStreak,
-        });
+        };
+      });
+    }
 
-        // Update the local state to reflect new stats
-        setState(() {
-          userStats = {
-            'matchesPlayed': matchesPlayed,
-            'winPercentage': (wins / matchesPlayed) * 100,
-            'winStreak': winStreak,
-            'highestWinStreak': highestWinStreak,
-          };
-        });
-      }
-    });
-  }
+    // Save guess stats only if the user has won
+    if (hasWon) {
+      transaction.set(guessStatsRef, {
+        'attempts': attempts,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    }
+  });
+}
 
   void handleReset() {
     setState(() {

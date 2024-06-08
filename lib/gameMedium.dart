@@ -2,21 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'result_dialog.dart';
-import 'login.dart';
-import 'setting.dart';
-import 'mainmenu.dart';
+import 'login.dart'; // Import the login.dart file
+import 'setting.dart'; // Add this import
+import 'mainmenu.dart'; // Add this import
 
 class GameMedium extends StatefulWidget {
   final String initialTargetWord;
   final Function(bool) toggleTheme;
 
-  const GameMedium({Key? key, required this.initialTargetWord, required this.toggleTheme}) : super(key: key);
+  const GameMedium(
+      {Key? key, required this.initialTargetWord, required this.toggleTheme})
+      : super(key: key);
 
   @override
   State<GameMedium> createState() => _GameMediumState();
 }
 
-class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateMixin {
+class _GameMediumState extends State<GameMedium>
+    with SingleTickerProviderStateMixin {
   late String targetWord;
   List<String> gridContent = List.generate(25, (index) => '');
   List<Color> gridColors = List.generate(25, (index) => Colors.red);
@@ -43,7 +46,8 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
       vsync: this,
       duration: Duration(milliseconds: 250),
     );
-    _slideAnimation = Tween<Offset>(begin: Offset(-1, 0), end: Offset(0, 0)).animate(_animationController);
+    _slideAnimation = Tween<Offset>(begin: Offset(-1, 0), end: Offset(0, 0))
+        .animate(_animationController);
     _checkUser();
   }
 
@@ -58,7 +62,11 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
   }
 
   Future<void> _fetchUserStats() async {
-    final statsRef = FirebaseFirestore.instance.collection('users').doc(currentUser!.uid).collection('stats').doc('medium');
+    final statsRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser!.uid)
+        .collection('stats')
+        .doc('medium');
     final statsDoc = await statsRef.get();
     if (statsDoc.exists) {
       setState(() {
@@ -67,7 +75,10 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
     }
     user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .get();
       setState(() {
         username = userDoc.get('username');
         _difficultyLevel = userDoc.get('difficultyLevel') ?? 0;
@@ -84,7 +95,8 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
   }
 
   Future<void> _fetchRandomWord() async {
-    final wordList = await FirebaseFirestore.instance.collection('Wordlists').get();
+    final wordList =
+        await FirebaseFirestore.instance.collection('Wordlists').get();
     final words = wordList.docs.map((doc) => doc['word'] as String).toList();
     words.shuffle();
     setState(() {
@@ -182,7 +194,35 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
     }
   }
 
-  void _showResultDialog(bool hasWon) {
+  Future<Map<int, int>> _fetchGuessStats(String difficulty) async {
+    if (isGuest) return {};
+
+    final guessStatsRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser!.uid)
+        .collection('guessStats')
+        .doc(difficulty)
+        .collection('games');
+    final guessStatsDocs = await guessStatsRef.get();
+    Map<int, int> guessStats = {};
+
+    for (var doc in guessStatsDocs.docs) {
+      int attempts = doc['attempts'];
+      if (guessStats.containsKey(attempts)) {
+        guessStats[attempts] = guessStats[attempts]! + 1;
+      } else {
+        guessStats[attempts] = 1;
+      }
+    }
+
+    return guessStats;
+  }
+
+  void _showResultDialog(bool hasWon) async {
+    String difficulty = 'medium'; // Replace with current difficulty
+    int barsCount = 5; // 5 bars for medium difficulty
+    Map<int, int> guessStats = await _fetchGuessStats(difficulty);
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -193,8 +233,12 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
           await _fetchRandomWord();
           handleReset();
         },
-        stats: isGuest ? null : userStats,
+        stats: isGuest
+            ? null
+            : userStats, // Only show stats if user is not a guest
         isGuest: isGuest,
+        guessStats: guessStats,
+        barsCount: barsCount,
       ),
     );
   }
@@ -202,7 +246,19 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
   Future<void> _updateStats(bool hasWon) async {
     if (isGuest) return;
 
-    final statsRef = FirebaseFirestore.instance.collection('users').doc(currentUser!.uid).collection('stats').doc('medium');
+    final difficulty = 'medium'; // Replace with current difficulty
+    final statsRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser!.uid)
+        .collection('stats')
+        .doc(difficulty);
+    final guessStatsRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser!.uid)
+        .collection('guessStats')
+        .doc(difficulty)
+        .collection('games')
+        .doc();
 
     await FirebaseFirestore.instance.runTransaction((transaction) async {
       final statsDoc = await transaction.get(statsRef);
@@ -219,7 +275,9 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
         final matchesPlayed = data['matchesPlayed'] + 1;
         final wins = data['wins'] + (hasWon ? 1 : 0);
         final winStreak = hasWon ? data['winStreak'] + 1 : 0;
-        final highestWinStreak = hasWon && winStreak > data['highestWinStreak'] ? winStreak : data['highestWinStreak'];
+        final highestWinStreak = hasWon && winStreak > data['highestWinStreak']
+            ? winStreak
+            : data['highestWinStreak'];
 
         transaction.update(statsRef, {
           'matchesPlayed': matchesPlayed,
@@ -236,6 +294,13 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
             'winStreak': winStreak,
             'highestWinStreak': highestWinStreak,
           };
+        });
+      }
+
+      if (hasWon) {
+        transaction.set(guessStatsRef, {
+          'attempts': attempts,
+          'timestamp': FieldValue.serverTimestamp(),
         });
       }
     });
@@ -267,7 +332,6 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
     setState(() {
       user = null;
       username = null;
-      // Revert settings to default (easy mode)
       _difficultyLevel = 0;
       _isDarkMode = false;
     });
@@ -275,7 +339,8 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
     widget.toggleTheme(false); // Revert to light theme on logout
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => MainMenu(toggleTheme: widget.toggleTheme)),
+      MaterialPageRoute(
+          builder: (context) => MainMenu(toggleTheme: widget.toggleTheme)),
     );
   }
 
@@ -385,12 +450,14 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
                             children: [
                               ElevatedButton(
                                 onPressed: handleSubmit,
-                                child: Text('Submit', style: TextStyle(fontSize: 18)),
+                                child: Text('Submit',
+                                    style: TextStyle(fontSize: 18)),
                               ),
                               SizedBox(width: 20),
                               ElevatedButton(
                                 onPressed: handleReset,
-                                child: Text('Reset', style: TextStyle(fontSize: 18)),
+                                child: Text('Reset',
+                                    style: TextStyle(fontSize: 18)),
                               ),
                             ],
                           ),
@@ -423,15 +490,23 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
                   child: Column(
                     children: [
                       ListTile(
-                        leading: Icon(Icons.help_outline, color: _isDarkMode ? Colors.white : Colors.black),
-                        title: Text('Learn?', style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black)),
+                        leading: Icon(Icons.help_outline,
+                            color: _isDarkMode ? Colors.white : Colors.black),
+                        title: Text('Learn?',
+                            style: TextStyle(
+                                color:
+                                    _isDarkMode ? Colors.white : Colors.black)),
                         onTap: () {
                           toggleDrawer();
                         },
                       ),
                       ListTile(
-                        leading: Icon(Icons.settings, color: _isDarkMode ? Colors.white : Colors.black),
-                        title: Text('Setting', style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black)),
+                        leading: Icon(Icons.settings,
+                            color: _isDarkMode ? Colors.white : Colors.black),
+                        title: Text('Setting',
+                            style: TextStyle(
+                                color:
+                                    _isDarkMode ? Colors.white : Colors.black)),
                         onTap: () {
                           toggleDrawer();
                           if (user == null) {
@@ -439,14 +514,20 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
                           } else {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => SettingPage(toggleTheme: widget.toggleTheme)),
+                              MaterialPageRoute(
+                                  builder: (context) => SettingPage(
+                                      toggleTheme: widget.toggleTheme)),
                             );
                           }
                         },
                       ),
                       ListTile(
-                        leading: Icon(Icons.history, color: _isDarkMode ? Colors.white : Colors.black),
-                        title: Text('History', style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black)),
+                        leading: Icon(Icons.history,
+                            color: _isDarkMode ? Colors.white : Colors.black),
+                        title: Text('History',
+                            style: TextStyle(
+                                color:
+                                    _isDarkMode ? Colors.white : Colors.black)),
                         onTap: () {
                           toggleDrawer();
                         },
@@ -458,7 +539,9 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
                               toggleDrawer();
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => LoginPage(toggleTheme: widget.toggleTheme)),
+                                MaterialPageRoute(
+                                    builder: (context) => LoginPage(
+                                        toggleTheme: widget.toggleTheme)),
                               );
                             } else {
                               _logout();
@@ -467,8 +550,10 @@ class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateM
                           },
                           child: Text(user == null ? 'Login' : 'Logout'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: user == null ? Colors.white : Colors.red,
-                            foregroundColor: user == null ? Colors.black : Colors.white,
+                            backgroundColor:
+                                user == null ? Colors.white : Colors.red,
+                            foregroundColor:
+                                user == null ? Colors.black : Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
@@ -493,7 +578,8 @@ class Grid extends StatelessWidget {
   final List<String> gridContent;
   final List<Color> gridColors;
 
-  const Grid({required this.gridContent, required this.gridColors, Key? key}) : super(key: key);
+  const Grid({required this.gridContent, required this.gridColors, Key? key})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -525,14 +611,39 @@ class Keyboard extends StatelessWidget {
   final Function(String) onKeyPressed;
   final Function() onDeletePressed;
 
-  const Keyboard({required this.onKeyPressed, required this.onDeletePressed, Key? key}) : super(key: key);
+  const Keyboard(
+      {required this.onKeyPressed, required this.onDeletePressed, Key? key})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final List<String> keys = [
-      'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
-      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L',
-      'Z', 'X', 'C', 'V', 'B', 'N', 'M'
+      'Q',
+      'W',
+      'E',
+      'R',
+      'T',
+      'Y',
+      'U',
+      'I',
+      'O',
+      'P',
+      'A',
+      'S',
+      'D',
+      'F',
+      'G',
+      'H',
+      'J',
+      'K',
+      'L',
+      'Z',
+      'X',
+      'C',
+      'V',
+      'B',
+      'N',
+      'M'
     ];
 
     return Column(
