@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'result_dialog.dart';
-import 'login.dart';  // Import the login.dart file
-import 'setting.dart';  // Import the setting.dart file
+import 'login.dart';
+import 'mainmenu.dart'; // Ensure this import is present
+import 'setting.dart';
 
 class GameEasy extends StatefulWidget {
   final String initialTargetWord;
@@ -27,6 +28,8 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
   bool _isDrawerOpen = false;
   String? username;
   User? user;
+  int _difficultyLevel = 0; // Default to easy mode
+  bool _isDarkMode = false; // Default to light mode
 
   @override
   void initState() {
@@ -46,6 +49,14 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
       DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
       setState(() {
         username = userDoc.get('username');
+        _difficultyLevel = userDoc.get('difficultyLevel') ?? 0;
+        _isDarkMode = userDoc.get('isDarkMode') ?? false;
+      });
+    } else {
+      // If not logged in, ensure defaults are set
+      setState(() {
+        _difficultyLevel = 0;
+        _isDarkMode = false;
       });
     }
   }
@@ -191,7 +202,47 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
     setState(() {
       user = null;
       username = null;
+      // Revert settings to default (easy mode)
+      _difficultyLevel = 0;
+      _isDarkMode = false;
     });
+    await _saveUserSettings(); // Save settings on logout
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => MainMenu()),
+    );
+  }
+
+  Future<void> _saveUserSettings() async {
+    if (user != null) {
+      await FirebaseFirestore.instance.collection('users').doc(user!.uid).set({
+        'difficultyLevel': _difficultyLevel,
+        'isDarkMode': _isDarkMode,
+      }, SetOptions(merge: true));
+    }
+  }
+
+  void _showLoginPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: AlertDialog(
+            title: Text("You are not logged in"),
+            content: Text("Please login first."),
+            actions: [
+              TextButton(
+                child: Text("Okay"),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -316,12 +367,15 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
                         leading: Icon(Icons.settings),
                         title: Text('Setting'),
                         onTap: () {
-                          // Handle Setting tap
                           toggleDrawer();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => SettingPage()),
-                          );
+                          if (user == null) {
+                            _showLoginPopup(context);
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => SettingPage()),
+                            );
+                          }
                         },
                       ),
                       ListTile(

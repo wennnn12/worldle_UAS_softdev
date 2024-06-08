@@ -4,19 +4,18 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'result_dialog.dart';
 import 'login.dart'; // Import the login.dart file
 import 'setting.dart'; // Add this import
+import 'mainmenu.dart'; // Add this import
 
 class GameMedium extends StatefulWidget {
   final String initialTargetWord;
 
-  const GameMedium({Key? key, required this.initialTargetWord})
-      : super(key: key);
+  const GameMedium({Key? key, required this.initialTargetWord}) : super(key: key);
 
   @override
   State<GameMedium> createState() => _GameMediumState();
 }
 
-class _GameMediumState extends State<GameMedium>
-    with SingleTickerProviderStateMixin {
+class _GameMediumState extends State<GameMedium> with SingleTickerProviderStateMixin {
   late String targetWord;
   List<String> gridContent = List.generate(25, (index) => '');
   List<Color> gridColors = List.generate(25, (index) => Colors.red);
@@ -29,6 +28,8 @@ class _GameMediumState extends State<GameMedium>
   bool _isDrawerOpen = false;
   String? username;
   User? user;
+  int _difficultyLevel = 0; // Default to easy mode
+  bool _isDarkMode = false; // Default to light mode
 
   @override
   void initState() {
@@ -38,27 +39,78 @@ class _GameMediumState extends State<GameMedium>
       vsync: this,
       duration: Duration(milliseconds: 250),
     );
-    _slideAnimation = Tween<Offset>(begin: Offset(-1, 0), end: Offset(0, 0))
-        .animate(_animationController);
+    _slideAnimation = Tween<Offset>(begin: Offset(-1, 0), end: Offset(0, 0)).animate(_animationController);
     _checkUser();
   }
 
   Future<void> _checkUser() async {
     user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user!.uid)
-          .get();
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
       setState(() {
         username = userDoc.get('username');
+        _difficultyLevel = userDoc.get('difficultyLevel') ?? 0;
+        _isDarkMode = userDoc.get('isDarkMode') ?? false;
+      });
+    } else {
+      // If not logged in, ensure defaults are set
+      setState(() {
+        _difficultyLevel = 0;
+        _isDarkMode = false;
       });
     }
   }
 
+  Future<void> _saveUserSettings() async {
+    if (user != null) {
+      await FirebaseFirestore.instance.collection('users').doc(user!.uid).set({
+        'difficultyLevel': _difficultyLevel,
+        'isDarkMode': _isDarkMode,
+      }, SetOptions(merge: true));
+    }
+  }
+
+  Future<void> _logout() async {
+    await FirebaseAuth.instance.signOut();
+    setState(() {
+      user = null;
+      username = null;
+      // Revert settings to default (easy mode)
+      _difficultyLevel = 0;
+      _isDarkMode = false;
+    });
+    await _saveUserSettings(); // Save settings on logout
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => MainMenu()),
+    );
+  }
+
+  void _showLoginPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: AlertDialog(
+            title: Text("You are not logged in"),
+            content: Text("Please login first."),
+            actions: [
+              TextButton(
+                child: Text("Okay"),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _fetchRandomWord() async {
-    final wordList =
-        await FirebaseFirestore.instance.collection('Wordlists').get();
+    final wordList = await FirebaseFirestore.instance.collection('Wordlists').get();
     final words = wordList.docs.map((doc) => doc['word'] as String).toList();
     words.shuffle();
     setState(() {
@@ -124,8 +176,7 @@ class _GameMediumState extends State<GameMedium>
         for (int i = 0; i < 5; i++) {
           if (gridContent[startIndex + i] == targetWord[i]) {
             gridColors[startIndex + i] = Colors.green;
-            targetLetterCounts[gridContent[startIndex + i]] =
-                targetLetterCounts[gridContent[startIndex + i]]! - 1;
+            targetLetterCounts[gridContent[startIndex + i]] = targetLetterCounts[gridContent[startIndex + i]]! - 1;
           } else {
             gridColors[startIndex + i] = Colors.grey;
             hasWon = false;
@@ -134,12 +185,9 @@ class _GameMediumState extends State<GameMedium>
 
         // Second pass: Identify correct letters in incorrect positions (yellow)
         for (int i = 0; i < 5; i++) {
-          if (gridColors[startIndex + i] != Colors.green &&
-              targetLetterCounts[gridContent[startIndex + i]] != null &&
-              targetLetterCounts[gridContent[startIndex + i]]! > 0) {
+          if (gridColors[startIndex + i] != Colors.green && targetLetterCounts[gridContent[startIndex + i]] != null && targetLetterCounts[gridContent[startIndex + i]]! > 0) {
             gridColors[startIndex + i] = Colors.yellow;
-            targetLetterCounts[gridContent[startIndex + i]] =
-                targetLetterCounts[gridContent[startIndex + i]]! - 1;
+            targetLetterCounts[gridContent[startIndex + i]] = targetLetterCounts[gridContent[startIndex + i]]! - 1;
           }
         }
 
@@ -194,14 +242,6 @@ class _GameMediumState extends State<GameMedium>
         _animationController.reverse();
         _isDrawerOpen = false;
       }
-    });
-  }
-
-  Future<void> _logout() async {
-    await FirebaseAuth.instance.signOut();
-    setState(() {
-      user = null;
-      username = null;
     });
   }
 
@@ -278,14 +318,12 @@ class _GameMediumState extends State<GameMedium>
                             children: [
                               ElevatedButton(
                                 onPressed: handleSubmit,
-                                child: Text('Submit',
-                                    style: TextStyle(fontSize: 18)),
+                                child: Text('Submit', style: TextStyle(fontSize: 18)),
                               ),
                               SizedBox(width: 20),
                               ElevatedButton(
                                 onPressed: handleReset,
-                                child: Text('Reset',
-                                    style: TextStyle(fontSize: 18)),
+                                child: Text('Reset', style: TextStyle(fontSize: 18)),
                               ),
                             ],
                           ),
@@ -330,11 +368,14 @@ class _GameMediumState extends State<GameMedium>
                         title: Text('Setting'),
                         onTap: () {
                           toggleDrawer();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => SettingPage()),
-                          );
+                          if (user == null) {
+                            _showLoginPopup(context);
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => SettingPage()),
+                            );
+                          }
                         },
                       ),
                       ListTile(
@@ -352,8 +393,7 @@ class _GameMediumState extends State<GameMedium>
                               toggleDrawer();
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(
-                                    builder: (context) => LoginPage()),
+                                MaterialPageRoute(builder: (context) => LoginPage()),
                               );
                             } else {
                               _logout();
@@ -362,12 +402,8 @@ class _GameMediumState extends State<GameMedium>
                           },
                           child: Text(user == null ? 'Login' : 'Logout'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: user == null
-                                ? Colors.white
-                                : Colors.red, // Background color
-                            foregroundColor: user == null
-                                ? Colors.black
-                                : Colors.white, // Text color
+                            backgroundColor: user == null ? Colors.white : Colors.red, // Background color
+                            foregroundColor: user == null ? Colors.black : Colors.white, // Text color
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
@@ -392,8 +428,7 @@ class Grid extends StatelessWidget {
   final List<String> gridContent;
   final List<Color> gridColors;
 
-  const Grid({required this.gridContent, required this.gridColors, Key? key})
-      : super(key: key);
+  const Grid({required this.gridContent, required this.gridColors, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -425,39 +460,14 @@ class Keyboard extends StatelessWidget {
   final Function(String) onKeyPressed;
   final Function() onDeletePressed;
 
-  const Keyboard(
-      {required this.onKeyPressed, required this.onDeletePressed, Key? key})
-      : super(key: key);
+  const Keyboard({required this.onKeyPressed, required this.onDeletePressed, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final List<String> keys = [
-      'Q',
-      'W',
-      'E',
-      'R',
-      'T',
-      'Y',
-      'U',
-      'I',
-      'O',
-      'P',
-      'A',
-      'S',
-      'D',
-      'F',
-      'G',
-      'H',
-      'J',
-      'K',
-      'L',
-      'Z',
-      'X',
-      'C',
-      'V',
-      'B',
-      'N',
-      'M'
+      'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
+      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L',
+      'Z', 'X', 'C', 'V', 'B', 'N', 'M'
     ];
 
     return Column(
