@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'gameEasy.dart';
 import 'gameMedium.dart';
-import 'gameHard.dart'; // Assuming you have this file
+import 'gameHard.dart'; // Import the GameHard file
 import 'login.dart';
 
 class MainMenu extends StatelessWidget {
@@ -33,31 +34,39 @@ class MainMenu extends StatelessWidget {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
-                String difficulty = await _showDifficultyDialog(context);
-                if (difficulty != null) {
-                  String randomWord = await _fetchRandomWord(difficulty);
-                  if (difficulty == 'easy') {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              GameEasy(initialTargetWord: randomWord)),
-                    );
-                  } else if (difficulty == 'medium') {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              GameMedium(initialTargetWord: randomWord)),
-                    );
-                  } else if (difficulty == 'hard') {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              GameHard(initialTargetWord: randomWord)),
-                    );
+                String difficulty = 'easy'; // Default to easy mode
+                User? user = FirebaseAuth.instance.currentUser;
+                if (user != null) {
+                  // Fetch user-specific difficulty
+                  var userData = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+                  try {
+                    difficulty = userData.get('difficultyLevel') == 1 ? 'medium' : userData.get('difficultyLevel') == 2 ? 'hard' : 'easy';
+                  } catch (e) {
+                    // Field doesn't exist, keep default value
                   }
+                }
+                String randomWord = await _fetchRandomWord(difficulty);
+                if (difficulty == 'easy') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            GameEasy(initialTargetWord: randomWord)),
+                  );
+                } else if (difficulty == 'medium') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            GameMedium(initialTargetWord: randomWord)),
+                  );
+                } else if (difficulty == 'hard') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            GameHard(initialTargetWord: randomWord)),
+                  );
                 }
               },
               child: Text('Play'),
@@ -75,37 +84,6 @@ class MainMenu extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  Future _showDifficultyDialog(BuildContext context) async {
-    return await showDialog<String>(
-      context: context,
-      builder: (BuildContext context) {
-        return SimpleDialog(
-          title: Text('Choose Difficulty'),
-          children: <Widget>[
-            SimpleDialogOption(
-              onPressed: () {
-                Navigator.pop(context, 'easy');
-              },
-              child: Text('Easy'),
-            ),
-            SimpleDialogOption(
-              onPressed: () {
-                Navigator.pop(context, 'medium');
-              },
-              child: Text('Medium'),
-            ),
-            SimpleDialogOption(
-              onPressed: () {
-                Navigator.pop(context, 'hard');
-              },
-              child: Text('Hard'),
-            ),
-          ],
-        );
-      },
     );
   }
 }
