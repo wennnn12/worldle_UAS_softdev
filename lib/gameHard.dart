@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'result_dialog.dart';
+import 'login.dart';  // Import the login.dart file
 
 class GameHard extends StatefulWidget {
   final String initialTargetWord;
@@ -11,17 +12,27 @@ class GameHard extends StatefulWidget {
   State<GameHard> createState() => _GameHardState();
 }
 
-class _GameHardState extends State<GameHard> {
+class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin {
   late String targetWord;
   List<String> gridContent = List.generate(20, (index) => '');
   List<Color> gridColors = List.generate(20, (index) => Colors.red);
   int currentRow = 0;
   int attempts = 0;
 
+  GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  late AnimationController _animationController;
+  late Animation<Offset> _slideAnimation;
+  bool _isDrawerOpen = false;
+
   @override
   void initState() {
     super.initState();
     targetWord = widget.initialTargetWord;
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 250),
+    );
+    _slideAnimation = Tween<Offset>(begin: Offset(-1, 0), end: Offset(0, 0)).animate(_animationController);
   }
 
   Future<void> _fetchRandomWord() async {
@@ -61,84 +72,83 @@ class _GameHardState extends State<GameHard> {
     });
   }
 
- void handleSubmit() {
-  setState(() {
-    int startIndex = currentRow * 5;
-    int endIndex = startIndex + 5;
+  void handleSubmit() {
+    setState(() {
+      int startIndex = currentRow * 5;
+      int endIndex = startIndex + 5;
 
-    bool isRowComplete = true;
-    for (int i = startIndex; i < endIndex; i++) {
-      if (gridContent[i].isEmpty) {
-        isRowComplete = false;
-        break;
-      }
-    }
-
-    if (isRowComplete) {
-      attempts++;
-      bool hasWon = true;
-
-      // First pass: Identify and mark correct letters (green)
-      Map<String, int> targetLetterCounts = {};
-      for (int i = 0; i < targetWord.length; i++) {
-        String letter = targetWord[i];
-        if (!targetLetterCounts.containsKey(letter)) {
-          targetLetterCounts[letter] = 0;
+      bool isRowComplete = true;
+      for (int i = startIndex; i < endIndex; i++) {
+        if (gridContent[i].isEmpty) {
+          isRowComplete = false;
+          break;
         }
-        targetLetterCounts[letter] = targetLetterCounts[letter]! + 1;
       }
 
-      for (int i = 0; i < 5; i++) {
-        if (gridContent[startIndex + i] == targetWord[i]) {
-          gridColors[startIndex + i] = Colors.green;
-          targetLetterCounts[gridContent[startIndex + i]] = targetLetterCounts[gridContent[startIndex + i]]! - 1;
+      if (isRowComplete) {
+        attempts++;
+        bool hasWon = true;
+
+        // First pass: Identify and mark correct letters (green)
+        Map<String, int> targetLetterCounts = {};
+        for (int i = 0; i < targetWord.length; i++) {
+          String letter = targetWord[i];
+          if (!targetLetterCounts.containsKey(letter)) {
+            targetLetterCounts[letter] = 0;
+          }
+          targetLetterCounts[letter] = targetLetterCounts[letter]! + 1;
+        }
+
+        for (int i = 0; i < 5; i++) {
+          if (gridContent[startIndex + i] == targetWord[i]) {
+            gridColors[startIndex + i] = Colors.green;
+            targetLetterCounts[gridContent[startIndex + i]] = targetLetterCounts[gridContent[startIndex + i]]! - 1;
+          } else {
+            gridColors[startIndex + i] = Colors.grey;
+            hasWon = false;
+          }
+        }
+
+        // Second pass: Identify correct letters in incorrect positions (yellow)
+        for (int i = 0; i < 5; i++) {
+          if (gridColors[startIndex + i] != Colors.green && targetLetterCounts[gridContent[startIndex + i]] != null && targetLetterCounts[gridContent[startIndex + i]]! > 0) {
+            gridColors[startIndex + i] = Colors.yellow;
+            targetLetterCounts[gridContent[startIndex + i]] = targetLetterCounts[gridContent[startIndex + i]]! - 1;
+          }
+        }
+
+        if (hasWon) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => ResultDialog(
+              hasWon: true,
+              attempts: attempts,
+              onRetry: () async {
+                await _fetchRandomWord();
+                handleReset();
+              },
+            ),
+          );
+        } else if (currentRow >= 3) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => ResultDialog(
+              hasWon: false,
+              attempts: attempts,
+              onRetry: () async {
+                await _fetchRandomWord();
+                handleReset();
+              },
+            ),
+          );
         } else {
-          gridColors[startIndex + i] = Colors.grey;
-          hasWon = false;
+          currentRow++;
         }
       }
-
-      // Second pass: Identify correct letters in incorrect positions (yellow)
-      for (int i = 0; i < 5; i++) {
-        if (gridColors[startIndex + i] != Colors.green && targetLetterCounts[gridContent[startIndex + i]] != null && targetLetterCounts[gridContent[startIndex + i]]! > 0) {
-          gridColors[startIndex + i] = Colors.yellow;
-          targetLetterCounts[gridContent[startIndex + i]] = targetLetterCounts[gridContent[startIndex + i]]! - 1;
-        }
-      }
-
-      if (hasWon) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => ResultDialog(
-            hasWon: true,
-            attempts: attempts,
-            onRetry: () async {
-              await _fetchRandomWord();
-              handleReset();
-            },
-          ),
-        );
-      } else if (currentRow >= 3) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => ResultDialog(
-            hasWon: false,
-            attempts: attempts,
-            onRetry: () async {
-              await _fetchRandomWord();
-              handleReset();
-            },
-          ),
-        );
-      } else {
-        currentRow++;
-      }
-    }
-  });
-}
-
+    });
+  }
 
   void handleReset() {
     setState(() {
@@ -149,56 +159,154 @@ class _GameHardState extends State<GameHard> {
     });
   }
 
+  void toggleDrawer() {
+    setState(() {
+      if (_animationController.isDismissed) {
+        _animationController.forward();
+        _isDrawerOpen = true;
+      } else {
+        _animationController.reverse();
+        _isDrawerOpen = false;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: Text('Worldle'),
         centerTitle: true,
         elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.menu), // Hamburger icon
+          onPressed: toggleDrawer,
+        ),
       ),
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            flex: 7,
-            child: Container(
-              color: Colors.yellow,
-              child: Grid(gridContent: gridContent, gridColors: gridColors),
-            ),
-          ),
-          Expanded(
-            flex: 4,
-            child: Container(
-              color: Colors.green,
-              child: Column(
-                children: [
-                  Expanded(
-                    flex: 4,
-                    child: Keyboard(
-                      onKeyPressed: handleKeyPress,
-                      onDeletePressed: handleDeletePress,
-                    ),
-                  ),
-                  Expanded(
-                    flex: 1,
-                    child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ElevatedButton(
-                            onPressed: handleSubmit,
-                            child: Text('Submit', style: TextStyle(fontSize: 18)),
-                          ),
-                          SizedBox(width: 20),
-                          ElevatedButton(
-                            onPressed: handleReset,
-                            child: Text('Reset', style: TextStyle(fontSize: 18)),
-                          ),
-                        ],
+          Column(
+            children: [
+              Expanded(
+                flex: 7,
+                child: Container(
+                  color: Colors.yellow,
+                  child: Grid(gridContent: gridContent, gridColors: gridColors),
+                ),
+              ),
+              Expanded(
+                flex: 4,
+                child: Container(
+                  color: Colors.green,
+                  child: Column(
+                    children: [
+                      Expanded(
+                        flex: 4,
+                        child: Keyboard(
+                          onKeyPressed: handleKeyPress,
+                          onDeletePressed: handleDeletePress,
+                        ),
                       ),
-                    ),
+                      Expanded(
+                        flex: 1,
+                        child: Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ElevatedButton(
+                                onPressed: handleSubmit,
+                                child: Text('Submit', style: TextStyle(fontSize: 18)),
+                              ),
+                              SizedBox(width: 20),
+                              ElevatedButton(
+                                onPressed: handleReset,
+                                child: Text('Reset', style: TextStyle(fontSize: 18)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
+              ),
+            ],
+          ),
+          if (_isDrawerOpen)
+            GestureDetector(
+              onTap: toggleDrawer,
+              child: Container(
+                color: Colors.black54,
+                width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height,
+              ),
+            ),
+          SlideTransition(
+            position: _slideAnimation,
+            child: SafeArea(
+              child: Material(
+                elevation: 8,
+                child: Container(
+                  width: 240,
+                  height: 350,
+                  color: Colors.white,
+                  child: Column(
+                    children: [
+                      ListTile(
+                        leading: Icon(Icons.help_outline),
+                        title: Text('Learn?'),
+                        onTap: () {
+                          // Handle Learn tap
+                          toggleDrawer();
+                        },
+                      ),
+                      ListTile(
+                        leading: Icon(Icons.settings),
+                        title: Text('Setting'),
+                        onTap: () {
+                          // Handle Setting tap
+                          toggleDrawer();
+                        },
+                      ),
+                      ListTile(
+                        leading: Icon(Icons.history),
+                        title: Text('History'),
+                        onTap: () {
+                          // Handle History tap
+                          toggleDrawer();
+                        },
+                      ),
+                      ListTile(
+                        title: ElevatedButton(
+                          onPressed: () {
+                            toggleDrawer();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => LoginPage()),
+                            );
+                          },
+                          child: Text('Login'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white, // Background color
+                            foregroundColor: Colors.black, // Text color
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                            elevation: 0,
+                            side: BorderSide(color: Colors.grey),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
