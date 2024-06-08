@@ -8,8 +8,9 @@ import 'mainmenu.dart'; // Add this import
 
 class GameHard extends StatefulWidget {
   final String initialTargetWord;
+  final Function(bool) toggleTheme;
 
-  const GameHard({Key? key, required this.initialTargetWord}) : super(key: key);
+  const GameHard({Key? key, required this.initialTargetWord, required this.toggleTheme}) : super(key: key);
 
   @override
   State<GameHard> createState() => _GameHardState();
@@ -28,10 +29,10 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
   bool _isDrawerOpen = false;
   String? username;
   User? user;
-  int _difficultyLevel = 0; // Default to easy mode
-  bool _isDarkMode = false; // Default to light mode
+  int _difficultyLevel = 0;
+  bool _isDarkMode = false;
 
-  @override
+   @override
   void initState() {
     super.initState();
     targetWord = widget.initialTargetWord;
@@ -52,12 +53,13 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
         _difficultyLevel = userDoc.get('difficultyLevel') ?? 0;
         _isDarkMode = userDoc.get('isDarkMode') ?? false;
       });
+      widget.toggleTheme(_isDarkMode);
     } else {
-      // If not logged in, ensure defaults are set
       setState(() {
         _difficultyLevel = 0;
         _isDarkMode = false;
       });
+      widget.toggleTheme(false);
     }
   }
 
@@ -75,14 +77,14 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
     setState(() {
       user = null;
       username = null;
-      // Revert settings to default (easy mode)
       _difficultyLevel = 0;
       _isDarkMode = false;
     });
-    await _saveUserSettings(); // Save settings on logout
+    await _saveUserSettings();
+    widget.toggleTheme(false);
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => MainMenu()),
+      MaterialPageRoute(builder: (context) => MainMenu(toggleTheme: widget.toggleTheme)),
     );
   }
 
@@ -259,8 +261,9 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
         title: Text('Worldle'),
         centerTitle: true,
         elevation: 0,
+        backgroundColor: _isDarkMode ? Colors.black : Colors.blue,
         leading: IconButton(
-          icon: Icon(Icons.menu), // Hamburger icon
+          icon: Icon(Icons.menu),
           onPressed: toggleDrawer,
         ),
         actions: [
@@ -286,21 +289,21 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
           ),
         ],
       ),
-      body: Stack(
+     body: Stack(
         children: [
           Column(
             children: [
               Expanded(
                 flex: 7,
                 child: Container(
-                  color: Colors.yellow,
+                  color: _isDarkMode ? Colors.grey[900] : Colors.yellow,
                   child: Grid(gridContent: gridContent, gridColors: gridColors),
                 ),
               ),
               Expanded(
                 flex: 4,
                 child: Container(
-                  color: Colors.green,
+                  color: _isDarkMode ? Colors.black : Colors.green,
                   child: Column(
                     children: [
                       Expanded(
@@ -352,20 +355,19 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
                 child: Container(
                   width: 240,
                   height: 350,
-                  color: Colors.white,
+                  color: _isDarkMode ? Colors.black : Colors.white,
                   child: Column(
                     children: [
                       ListTile(
-                        leading: Icon(Icons.help_outline),
-                        title: Text('Learn?'),
+                        leading: Icon(Icons.help_outline, color: _isDarkMode ? Colors.white : Colors.black),
+                        title: Text('Learn?', style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black)),
                         onTap: () {
-                          // Handle Learn tap
                           toggleDrawer();
                         },
                       ),
                       ListTile(
-                        leading: Icon(Icons.settings),
-                        title: Text('Setting'),
+                        leading: Icon(Icons.settings, color: _isDarkMode ? Colors.white : Colors.black),
+                        title: Text('Setting', style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black)),
                         onTap: () {
                           toggleDrawer();
                           if (user == null) {
@@ -373,16 +375,15 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
                           } else {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => SettingPage()),
+                              MaterialPageRoute(builder: (context) => SettingPage(toggleTheme: widget.toggleTheme)),
                             );
                           }
                         },
                       ),
                       ListTile(
-                        leading: Icon(Icons.history),
-                        title: Text('History'),
+                        leading: Icon(Icons.history, color: _isDarkMode ? Colors.white : Colors.black),
+                        title: Text('History', style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black)),
                         onTap: () {
-                          // Handle History tap
                           toggleDrawer();
                         },
                       ),
@@ -393,7 +394,7 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
                               toggleDrawer();
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => LoginPage()),
+                                MaterialPageRoute(builder: (context) => LoginPage(toggleTheme: widget.toggleTheme)),
                               );
                             } else {
                               _logout();
@@ -402,8 +403,8 @@ class _GameHardState extends State<GameHard> with SingleTickerProviderStateMixin
                           },
                           child: Text(user == null ? 'Login' : 'Logout'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: user == null ? Colors.white : Colors.red, // Background color
-                            foregroundColor: user == null ? Colors.black : Colors.white, // Text color
+                            backgroundColor: user == null ? Colors.white : Colors.red,
+                            foregroundColor: user == null ? Colors.black : Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
