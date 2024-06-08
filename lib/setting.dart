@@ -5,8 +5,11 @@ import 'gameHard.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-
 class SettingPage extends StatefulWidget {
+  final Function(bool) toggleTheme;
+
+  SettingPage({required this.toggleTheme});
+
   @override
   _SettingPageState createState() => _SettingPageState();
 }
@@ -22,27 +25,29 @@ class _SettingPageState extends State<SettingPage> {
     _loadUserSettings();
   }
 
-Future<void> _loadUserSettings() async {
-  user = FirebaseAuth.instance.currentUser;
-  if (user != null) {
-    DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
-    setState(() {
-      _difficultyLevel = 0; // Default value
-      _isDarkMode = false; // Default value
-      try {
-        _difficultyLevel = userDoc.get('difficultyLevel');
-      } catch (e) {
-        // Field doesn't exist, keep default value
-      }
-      try {
-        _isDarkMode = userDoc.get('isDarkMode');
-      } catch (e) {
-        // Field doesn't exist, keep default value
-      }
-    });
+  Future<void> _loadUserSettings() async {
+    user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .get();
+      setState(() {
+        _difficultyLevel = 0; // Default value
+        _isDarkMode = false; // Default value
+        try {
+          _difficultyLevel = userDoc.get('difficultyLevel');
+        } catch (e) {
+          // Field doesn't exist, keep default value
+        }
+        try {
+          _isDarkMode = userDoc.get('isDarkMode');
+        } catch (e) {
+          // Field doesn't exist, keep default value
+        }
+      });
+    }
   }
-}
-
 
   Future<void> _saveUserSettings() async {
     if (user != null) {
@@ -110,6 +115,7 @@ Future<void> _loadUserSettings() async {
                     onChanged: (bool value) {
                       setState(() {
                         _isDarkMode = value;
+                        widget.toggleTheme(_isDarkMode);
                         _saveUserSettings(); // Save settings on change
                       });
                     },
@@ -145,16 +151,24 @@ Future<void> _loadUserSettings() async {
 
     switch (_difficultyLevel) {
       case 0:
-        targetPage = GameEasy(initialTargetWord: 'example'); // Provide the initial target word
+        targetPage = GameEasy(
+            initialTargetWord: 'example',
+            toggleTheme: widget.toggleTheme); // Provide the initial target word
         break;
       case 1:
-        targetPage = GameMedium(initialTargetWord: 'example'); // Provide the initial target word
+        targetPage = GameMedium(
+            initialTargetWord: 'example',
+            toggleTheme: widget.toggleTheme); // Provide the initial target word
         break;
       case 2:
-        targetPage = GameHard(initialTargetWord: 'example'); // Provide the initial target word
+        targetPage = GameHard(
+            initialTargetWord: 'example',
+            toggleTheme: widget.toggleTheme); // Provide the initial target word
         break;
       default:
-        targetPage = GameEasy(initialTargetWord: 'example'); // Provide the initial target word
+        targetPage = GameEasy(
+            initialTargetWord: 'example',
+            toggleTheme: widget.toggleTheme); // Provide the initial target word
         break;
     }
 

@@ -8,8 +8,9 @@ import 'setting.dart';
 
 class GameEasy extends StatefulWidget {
   final String initialTargetWord;
+  final Function(bool) toggleTheme;
 
-  const GameEasy({Key? key, required this.initialTargetWord}) : super(key: key);
+  const GameEasy({Key? key, required this.initialTargetWord, required this.toggleTheme}) : super(key: key);
 
   @override
   State<GameEasy> createState() => _GameEasyState();
@@ -52,12 +53,14 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
         _difficultyLevel = userDoc.get('difficultyLevel') ?? 0;
         _isDarkMode = userDoc.get('isDarkMode') ?? false;
       });
+      widget.toggleTheme(_isDarkMode); // Apply user-specific theme
     } else {
       // If not logged in, ensure defaults are set
       setState(() {
         _difficultyLevel = 0;
         _isDarkMode = false;
       });
+      widget.toggleTheme(false); // Revert to light theme
     }
   }
 
@@ -207,9 +210,10 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
       _isDarkMode = false;
     });
     await _saveUserSettings(); // Save settings on logout
+    widget.toggleTheme(false); // Revert to light theme on logout
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => MainMenu()),
+      MaterialPageRoute(builder: (context) => MainMenu(toggleTheme: widget.toggleTheme)),
     );
   }
 
@@ -259,6 +263,7 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
         title: Text('Worldle'),
         centerTitle: true,
         elevation: 0,
+        backgroundColor: _isDarkMode ? Colors.black : Colors.blue,
         leading: IconButton(
           icon: Icon(Icons.menu), // Hamburger icon
           onPressed: toggleDrawer,
@@ -293,14 +298,14 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
               Expanded(
                 flex: 7,
                 child: Container(
-                  color: Colors.yellow,
+                  color: _isDarkMode ? Colors.grey[900] : Colors.yellow,
                   child: Grid(gridContent: gridContent, gridColors: gridColors),
                 ),
               ),
               Expanded(
                 flex: 4,
                 child: Container(
-                  color: Colors.green,
+                  color: _isDarkMode ? Colors.black : Colors.green,
                   child: Column(
                     children: [
                       Expanded(
@@ -352,20 +357,20 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
                 child: Container(
                   width: 240,
                   height: 350,
-                  color: Colors.white,
+                  color: _isDarkMode ? Colors.black : Colors.white,
                   child: Column(
                     children: [
                       ListTile(
-                        leading: Icon(Icons.help_outline),
-                        title: Text('Learn?'),
+                        leading: Icon(Icons.help_outline, color: _isDarkMode ? Colors.white : Colors.black),
+                        title: Text('Learn?', style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black)),
                         onTap: () {
                           // Handle Learn tap
                           toggleDrawer();
                         },
                       ),
                       ListTile(
-                        leading: Icon(Icons.settings),
-                        title: Text('Setting'),
+                        leading: Icon(Icons.settings, color: _isDarkMode ? Colors.white : Colors.black),
+                        title: Text('Setting', style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black)),
                         onTap: () {
                           toggleDrawer();
                           if (user == null) {
@@ -373,14 +378,14 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
                           } else {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => SettingPage()),
+                              MaterialPageRoute(builder: (context) => SettingPage(toggleTheme: widget.toggleTheme)),
                             );
                           }
                         },
                       ),
                       ListTile(
-                        leading: Icon(Icons.history),
-                        title: Text('History'),
+                        leading: Icon(Icons.history, color: _isDarkMode ? Colors.white : Colors.black),
+                        title: Text('History', style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black)),
                         onTap: () {
                           // Handle History tap
                           toggleDrawer();
@@ -393,7 +398,7 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
                               toggleDrawer();
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => LoginPage()),
+                                MaterialPageRoute(builder: (context) => LoginPage(toggleTheme: widget.toggleTheme)),
                               );
                             } else {
                               _logout();

@@ -3,10 +3,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'gameEasy.dart';
 import 'gameMedium.dart';
-import 'gameHard.dart'; // Import the GameHard file
+import 'gameHard.dart';
 import 'login.dart';
 
 class MainMenu extends StatelessWidget {
+  final Function(bool) toggleTheme;
+
+  MainMenu({required this.toggleTheme});
+
   Future<String> _fetchRandomWord(String difficulty) async {
     final wordList = await FirebaseFirestore.instance
         .collection('Wordlists')
@@ -38,9 +42,18 @@ class MainMenu extends StatelessWidget {
                 User? user = FirebaseAuth.instance.currentUser;
                 if (user != null) {
                   // Fetch user-specific difficulty
-                  var userData = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+                  var userData = await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(user.uid)
+                      .get();
                   try {
-                    difficulty = userData.get('difficultyLevel') == 1 ? 'medium' : userData.get('difficultyLevel') == 2 ? 'hard' : 'easy';
+                    difficulty = userData.get('difficultyLevel') == 1
+                        ? 'medium'
+                        : userData.get('difficultyLevel') == 2
+                            ? 'hard'
+                            : 'easy';
+                    bool isDarkMode = userData.get('isDarkMode') ?? false;
+                    toggleTheme(isDarkMode); // Apply user-specific theme
                   } catch (e) {
                     // Field doesn't exist, keep default value
                   }
@@ -50,22 +63,25 @@ class MainMenu extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) =>
-                            GameEasy(initialTargetWord: randomWord)),
+                        builder: (context) => GameEasy(
+                            initialTargetWord: randomWord,
+                            toggleTheme: toggleTheme)),
                   );
                 } else if (difficulty == 'medium') {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) =>
-                            GameMedium(initialTargetWord: randomWord)),
+                        builder: (context) => GameMedium(
+                            initialTargetWord: randomWord,
+                            toggleTheme: toggleTheme)),
                   );
                 } else if (difficulty == 'hard') {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) =>
-                            GameHard(initialTargetWord: randomWord)),
+                        builder: (context) => GameHard(
+                            initialTargetWord: randomWord,
+                            toggleTheme: toggleTheme)),
                   );
                 }
               },
@@ -76,7 +92,9 @@ class MainMenu extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => LoginPage()),
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          LoginPage(toggleTheme: toggleTheme)),
                 );
               },
               child: Text('Login'),
