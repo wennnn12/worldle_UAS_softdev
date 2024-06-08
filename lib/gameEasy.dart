@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'result_dialog.dart';
 import 'login.dart';  // Import the login.dart file
 
@@ -23,6 +24,8 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
   late AnimationController _animationController;
   late Animation<Offset> _slideAnimation;
   bool _isDrawerOpen = false;
+  String? username;
+  User? user;
 
   @override
   void initState() {
@@ -33,6 +36,17 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
       duration: Duration(milliseconds: 250),
     );
     _slideAnimation = Tween<Offset>(begin: Offset(-1, 0), end: Offset(0, 0)).animate(_animationController);
+    _checkUser();
+  }
+
+  Future<void> _checkUser() async {
+    user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
+      setState(() {
+        username = userDoc.get('username');
+      });
+    }
   }
 
   Future<void> _fetchRandomWord() async {
@@ -171,6 +185,14 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
     });
   }
 
+  Future<void> _logout() async {
+    await FirebaseAuth.instance.signOut();
+    setState(() {
+      user = null;
+      username = null;
+    });
+  }
+
   @override
   void dispose() {
     _animationController.dispose();
@@ -189,6 +211,28 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
           icon: Icon(Icons.menu), // Hamburger icon
           onPressed: toggleDrawer,
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.leaderboard,
+                  size: 28,
+                ),
+                SizedBox(height: 4),
+                Text(
+                  username ?? 'Username',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -286,16 +330,21 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
                       ListTile(
                         title: ElevatedButton(
                           onPressed: () {
-                            toggleDrawer();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => LoginPage()),
-                            );
+                            if (user == null) {
+                              toggleDrawer();
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => LoginPage()),
+                              );
+                            } else {
+                              _logout();
+                              toggleDrawer();
+                            }
                           },
-                          child: Text('Login'),
+                          child: Text(user == null ? 'Login' : 'Logout'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white, // Background color
-                            foregroundColor: Colors.black, // Text color
+                            backgroundColor: user == null ? Colors.white : Colors.red, // Background color
+                            foregroundColor: user == null ? Colors.black : Colors.white, // Text color
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
