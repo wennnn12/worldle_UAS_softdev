@@ -42,6 +42,7 @@ class _GameMediumState extends State<GameMedium>
   int _difficultyLevel = 0;
   bool _isDarkMode = false;
   bool _isGameStarted = false;
+  DateTime? _gameStartTime;
 
   @override
   void initState() {
@@ -141,7 +142,12 @@ class _GameMediumState extends State<GameMedium>
     setState(() {
       _isGameStarted = true;
       widget.onGameStarted(true);
+      if (_gameStartTime == null) {
+        _gameStartTime =
+            DateTime.now(); // Set the start time when the game starts
+      }
     });
+
     int startIndex = currentRow * 5;
     int endIndex = startIndex + 5;
 
@@ -157,6 +163,7 @@ class _GameMediumState extends State<GameMedium>
       attempts++;
       bool hasWon = true;
 
+      // First pass: Identify and mark correct letters (green)
       Map<String, int> targetLetterCounts = {};
       for (int i = 0; i < targetWord.length; i++) {
         String letter = targetWord[i];
@@ -177,6 +184,7 @@ class _GameMediumState extends State<GameMedium>
         }
       }
 
+      // Second pass: Mark present but misplaced letters (yellow)
       for (int i = 0; i < 5; i++) {
         if (gridColors[startIndex + i] != Colors.green &&
             targetLetterCounts[gridContent[startIndex + i]] != null &&
@@ -302,11 +310,14 @@ class _GameMediumState extends State<GameMedium>
           };
         });
       }
+      final playDuration = DateTime.now().difference(_gameStartTime!).inSeconds;
 
       if (hasWon) {
         transaction.set(guessStatsRef, {
           'attempts': attempts,
           'timestamp': FieldValue.serverTimestamp(),
+          'duration': playDuration,
+          'status': hasWon ? 'WIN' : 'LOSE',
         });
       }
     });

@@ -42,6 +42,7 @@ class _GameHardState extends State<GameHard>
   int _difficultyLevel = 0; // Default to easy mode
   bool _isDarkMode = false; // Default to light mode
   bool _isGameStarted = false;
+  DateTime? _gameStartTime;
 
   @override
   void initState() {
@@ -144,7 +145,12 @@ class _GameHardState extends State<GameHard>
     setState(() {
       _isGameStarted = true;
       widget.onGameStarted(true);
+      if (_gameStartTime == null) {
+        _gameStartTime =
+            DateTime.now(); // Set the start time when the game starts
+      }
     });
+
     int startIndex = currentRow * 5;
     int endIndex = startIndex + 5;
 
@@ -308,11 +314,14 @@ class _GameHardState extends State<GameHard>
           };
         });
       }
+      final playDuration = DateTime.now().difference(_gameStartTime!).inSeconds;
 
       if (hasWon) {
         transaction.set(guessStatsRef, {
           'attempts': attempts,
           'timestamp': FieldValue.serverTimestamp(),
+          'duration': playDuration,
+          'status': hasWon ? 'WIN' : 'LOSE',
         });
       }
     });
