@@ -5,6 +5,7 @@ import 'result_dialog.dart';
 import 'login.dart';
 import 'mainmenu.dart';
 import 'setting.dart';
+import 'leaderboard.dart';
 
 class GameEasy extends StatefulWidget {
   final String initialTargetWord;
@@ -183,8 +184,7 @@ class _GameEasyState extends State<GameEasy>
             targetLetterCounts[gridContent[startIndex + i]] != null &&
             targetLetterCounts[gridContent[startIndex + i]]! > 0) {
           gridColors[startIndex + i] = Colors.yellow;
-          targetLetterCounts[gridContent[startIndex + i]] =
-              targetLetterCounts[gridContent[startIndex + i]]! - 1;
+          targetLetterCounts[gridContent[startIndex + i]]! - 1;
         }
       }
 
@@ -420,22 +420,32 @@ class _GameEasyState extends State<GameEasy>
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.leaderboard,
-                  size: 28,
-                ),
-                SizedBox(height: 4),
-                Text(
-                  username ?? 'Username',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Leaderboard(),
                   ),
-                ),
-              ],
+                );
+              },
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.leaderboard,
+                    size: 28,
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    username ?? 'Username',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
