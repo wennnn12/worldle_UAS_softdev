@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:worldle_game/history.dart';
+import 'leaderboard.dart';
 import 'result_dialog.dart';
 import 'login.dart'; // Import the login.dart file
 import 'setting.dart'; // Add this import
@@ -45,7 +46,11 @@ class _GameHardState extends State<GameHard>
   @override
   void initState() {
     super.initState();
-    targetWord = widget.initialTargetWord;
+    _fetchRandomWord().then((newWord) {
+      setState(() {
+        targetWord = newWord;
+      });
+    });
     _animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 250),
@@ -99,14 +104,12 @@ class _GameHardState extends State<GameHard>
     }
   }
 
-  Future<void> _fetchRandomWord() async {
+  Future<String> _fetchRandomWord() async {
     final wordList =
         await FirebaseFirestore.instance.collection('Wordlists').get();
     final words = wordList.docs.map((doc) => doc['word'] as String).toList();
     words.shuffle();
-    setState(() {
-      targetWord = words.isNotEmpty ? words.first : 'ERROR';
-    });
+    return words.isNotEmpty ? words.first : 'ERROR';
   }
 
   void handleKeyPress(String letter) {
@@ -416,24 +419,34 @@ class _GameHardState extends State<GameHard>
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.leaderboard,
-                  size: 28,
-                ),
-                SizedBox(height: 4),
-                Text(
-                  username ?? 'Username',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Leaderboard(),
                   ),
-                ),
-              ],
+                );
+              },
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.leaderboard,
+                    size: 28,
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    username ?? 'Username',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+          )
         ],
       ),
       body: Stack(
