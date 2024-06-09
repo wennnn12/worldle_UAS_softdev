@@ -8,8 +8,16 @@ import 'login.dart';
 
 class MainMenu extends StatelessWidget {
   final Function(bool) toggleTheme;
+  final Function(bool) setGameStarted;
+  final bool isGameStarted;
+  final bool hasGuessed;
 
-  MainMenu({required this.toggleTheme});
+  MainMenu({
+    required this.toggleTheme,
+    required this.setGameStarted,
+    required this.isGameStarted,
+    required this.hasGuessed,
+  });
 
   Future<String> _fetchRandomWord(String difficulty) async {
     final wordList = await FirebaseFirestore.instance
@@ -65,7 +73,8 @@ class MainMenu extends StatelessWidget {
                     MaterialPageRoute(
                         builder: (context) => GameEasy(
                             initialTargetWord: randomWord,
-                            toggleTheme: toggleTheme)),
+                            toggleTheme: toggleTheme,
+                            onGameStarted: setGameStarted)),
                   );
                 } else if (difficulty == 'medium') {
                   Navigator.push(
@@ -73,7 +82,8 @@ class MainMenu extends StatelessWidget {
                     MaterialPageRoute(
                         builder: (context) => GameMedium(
                             initialTargetWord: randomWord,
-                            toggleTheme: toggleTheme)),
+                            toggleTheme: toggleTheme,
+                            onGameStarted: setGameStarted)),
                   );
                 } else if (difficulty == 'hard') {
                   Navigator.push(
@@ -81,7 +91,8 @@ class MainMenu extends StatelessWidget {
                     MaterialPageRoute(
                         builder: (context) => GameHard(
                             initialTargetWord: randomWord,
-                            toggleTheme: toggleTheme)),
+                            toggleTheme: toggleTheme,
+                            onGameStarted: setGameStarted)),
                   );
                 }
               },
@@ -93,8 +104,10 @@ class MainMenu extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) =>
-                          LoginPage(toggleTheme: toggleTheme)),
+                      builder: (context) => LoginPage(
+                          toggleTheme: toggleTheme,
+                          setGameStarted: setGameStarted,
+                          isGameStarted: isGameStarted)),
                 );
               },
               child: Text('Login'),

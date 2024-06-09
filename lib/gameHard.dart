@@ -9,10 +9,12 @@ import 'mainmenu.dart'; // Add this import
 class GameHard extends StatefulWidget {
   final String initialTargetWord;
   final Function(bool) toggleTheme;
+  final Function(bool) onGameStarted;
 
   const GameHard(
-      {Key? key, required this.initialTargetWord, required this.toggleTheme})
-      : super(key: key);
+      {required this.initialTargetWord,
+      required this.toggleTheme,
+      required this.onGameStarted});
 
   @override
   State<GameHard> createState() => _GameHardState();
@@ -37,6 +39,7 @@ class _GameHardState extends State<GameHard>
   User? user;
   int _difficultyLevel = 0; // Default to easy mode
   bool _isDarkMode = false; // Default to light mode
+  bool _isGameStarted = false;
 
   @override
   void initState() {
@@ -134,6 +137,10 @@ class _GameHardState extends State<GameHard>
   }
 
   Future<void> handleSubmit() async {
+    setState(() {
+      _isGameStarted = true;
+      widget.onGameStarted(true);
+    });
     int startIndex = currentRow * 5;
     int endIndex = startIndex + 5;
 
@@ -309,6 +316,8 @@ class _GameHardState extends State<GameHard>
 
   void handleReset() {
     setState(() {
+      _isGameStarted = false;
+      widget.onGameStarted(false);
       gridContent = List.generate(20, (index) => '');
       gridColors = List.generate(20, (index) => Colors.red);
       currentRow = 0;
@@ -342,7 +351,13 @@ class _GameHardState extends State<GameHard>
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-          builder: (context) => MainMenu(toggleTheme: widget.toggleTheme)),
+        builder: (context) => MainMenu(
+          toggleTheme: widget.toggleTheme,
+          setGameStarted: widget.onGameStarted,
+          isGameStarted: _isGameStarted,
+          hasGuessed: false, // Reset hasGuessed to false on logout
+        ),
+      ),
     );
   }
 
@@ -517,8 +532,14 @@ class _GameHardState extends State<GameHard>
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => SettingPage(
-                                      toggleTheme: widget.toggleTheme)),
+                                builder: (context) => SettingPage(
+                                  toggleTheme: widget.toggleTheme,
+                                  isGameStarted: _isGameStarted,
+                                  setGameStarted: widget.onGameStarted,
+                                  hasGuessed: currentRow >
+                                      0, // Pass true if at least one guess is made
+                                ),
+                              ),
                             );
                           }
                         },
@@ -542,8 +563,12 @@ class _GameHardState extends State<GameHard>
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => LoginPage(
-                                        toggleTheme: widget.toggleTheme)),
+                                  builder: (context) => LoginPage(
+                                    toggleTheme: widget.toggleTheme,
+                                    setGameStarted: widget.onGameStarted,
+                                    isGameStarted: _isGameStarted,
+                                  ),
+                                ),
                               );
                             } else {
                               _logout();

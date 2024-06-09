@@ -7,8 +7,16 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SettingPage extends StatefulWidget {
   final Function(bool) toggleTheme;
+  final bool isGameStarted;
+  final Function(bool) setGameStarted;
+  final bool hasGuessed; // Track if the user has guessed
 
-  SettingPage({required this.toggleTheme});
+  SettingPage({
+    required this.toggleTheme,
+    required this.isGameStarted,
+    required this.setGameStarted,
+    required this.hasGuessed,
+  });
 
   @override
   _SettingPageState createState() => _SettingPageState();
@@ -22,6 +30,7 @@ class _SettingPageState extends State<SettingPage> {
   @override
   void initState() {
     super.initState();
+    _isDarkMode = widget.isGameStarted; // Initialize _isDarkMode with the game state
     _loadUserSettings();
   }
 
@@ -33,18 +42,8 @@ class _SettingPageState extends State<SettingPage> {
           .doc(user!.uid)
           .get();
       setState(() {
-        _difficultyLevel = 0; // Default value
-        _isDarkMode = false; // Default value
-        try {
-          _difficultyLevel = userDoc.get('difficultyLevel');
-        } catch (e) {
-          // Field doesn't exist, keep default value
-        }
-        try {
-          _isDarkMode = userDoc.get('isDarkMode');
-        } catch (e) {
-          // Field doesn't exist, keep default value
-        }
+        _difficultyLevel = userDoc.get('difficultyLevel') ?? 0; // Default value
+        _isDarkMode = userDoc.get('isDarkMode') ?? false; // Default value
       });
     }
   }
@@ -56,6 +55,16 @@ class _SettingPageState extends State<SettingPage> {
         'isDarkMode': _isDarkMode,
       }, SetOptions(merge: true));
     }
+  }
+
+  Future<String> _fetchRandomWord(String difficulty) async {
+    final wordList = await FirebaseFirestore.instance
+        .collection('Wordlists')
+        .where('difficulty', isEqualTo: difficulty)
+        .get();
+    final words = wordList.docs.map((doc) => doc['word'] as String).toList();
+    words.shuffle();
+    return words.isNotEmpty ? words.first : 'ERROR'; // Fallback word if list is empty
   }
 
   @override
@@ -97,12 +106,14 @@ class _SettingPageState extends State<SettingPage> {
                     max: 2,
                     divisions: 2,
                     label: _getDifficultyText(),
-                    onChanged: (double value) {
-                      setState(() {
-                        _difficultyLevel = value.round();
-                        _saveUserSettings(); // Save settings on change
-                      });
-                    },
+                    onChanged: widget.isGameStarted
+                        ? null
+                        : (double value) {
+                            setState(() {
+                              _difficultyLevel = value.round();
+                              _saveUserSettings(); // Save settings on change
+                            });
+                          },
                   ),
                   SizedBox(height: 5),
                   Text(
@@ -112,13 +123,16 @@ class _SettingPageState extends State<SettingPage> {
                   SwitchListTile(
                     title: Text(_isDarkMode ? 'Night Mode' : 'Light Mode'),
                     value: _isDarkMode,
-                    onChanged: (bool value) {
-                      setState(() {
-                        _isDarkMode = value;
-                        widget.toggleTheme(_isDarkMode);
-                        _saveUserSettings(); // Save settings on change
-                      });
-                    },
+                    onChanged: widget.isGameStarted
+                        ? null
+                        : (bool value) {
+                            // Disable if the game has started
+                            setState(() {
+                              _isDarkMode = value;
+                              widget.toggleTheme(_isDarkMode);
+                              _saveUserSettings(); // Save settings on change
+                            });
+                          },
                   ),
                 ],
               ),
@@ -127,7 +141,47 @@ class _SettingPageState extends State<SettingPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _applySettings,
+        onPressed: () async {
+          if (!widget.hasGuessed) {
+            // Refresh the word if no guess has been made
+            String newWord = await _fetchRandomWord(_getDifficultyText().toLowerCase());
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) {
+                  switch (_difficultyLevel) {
+                    case 0:
+                      return GameEasy(
+                        initialTargetWord: newWord,
+                        toggleTheme: widget.toggleTheme,
+                        onGameStarted: widget.setGameStarted,
+                      );
+                    case 1:
+                      return GameMedium(
+                        initialTargetWord: newWord,
+                        toggleTheme: widget.toggleTheme,
+                        onGameStarted: widget.setGameStarted,
+                      );
+                    case 2:
+                      return GameHard(
+                        initialTargetWord: newWord,
+                        toggleTheme: widget.toggleTheme,
+                        onGameStarted: widget.setGameStarted,
+                      );
+                    default:
+                      return GameEasy(
+                        initialTargetWord: newWord,
+                        toggleTheme: widget.toggleTheme,
+                        onGameStarted: widget.setGameStarted,
+                      );
+                  }
+                },
+              ),
+            );
+          } else {
+            Navigator.pop(context); // Just go back to the game
+          }
+        },
         child: Icon(Icons.check),
       ),
     );
@@ -144,37 +198,5 @@ class _SettingPageState extends State<SettingPage> {
       default:
         return 'Easy';
     }
-  }
-
-  void _applySettings() {
-    Widget targetPage;
-
-    switch (_difficultyLevel) {
-      case 0:
-        targetPage = GameEasy(
-            initialTargetWord: 'example',
-            toggleTheme: widget.toggleTheme); // Provide the initial target word
-        break;
-      case 1:
-        targetPage = GameMedium(
-            initialTargetWord: 'example',
-            toggleTheme: widget.toggleTheme); // Provide the initial target word
-        break;
-      case 2:
-        targetPage = GameHard(
-            initialTargetWord: 'example',
-            toggleTheme: widget.toggleTheme); // Provide the initial target word
-        break;
-      default:
-        targetPage = GameEasy(
-            initialTargetWord: 'example',
-            toggleTheme: widget.toggleTheme); // Provide the initial target word
-        break;
-    }
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => targetPage),
-    );
   }
 }
