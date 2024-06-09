@@ -9,8 +9,14 @@ class SettingPage extends StatefulWidget {
   final Function(bool) toggleTheme;
   final bool isGameStarted;
   final Function(bool) setGameStarted;
+  final bool hasGuessed; // Track if the user has guessed
 
-  SettingPage({required this.toggleTheme, required this.isGameStarted, required this.setGameStarted});
+  SettingPage({
+    required this.toggleTheme,
+    required this.isGameStarted,
+    required this.setGameStarted,
+    required this.hasGuessed,
+  });
 
   @override
   _SettingPageState createState() => _SettingPageState();
@@ -49,6 +55,16 @@ class _SettingPageState extends State<SettingPage> {
         'isDarkMode': _isDarkMode,
       }, SetOptions(merge: true));
     }
+  }
+
+  Future<String> _fetchRandomWord(String difficulty) async {
+    final wordList = await FirebaseFirestore.instance
+        .collection('Wordlists')
+        .where('difficulty', isEqualTo: difficulty)
+        .get();
+    final words = wordList.docs.map((doc) => doc['word'] as String).toList();
+    words.shuffle();
+    return words.isNotEmpty ? words.first : 'ERROR'; // Fallback word if list is empty
   }
 
   @override
@@ -125,9 +141,43 @@ class _SettingPageState extends State<SettingPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          if (!widget.isGameStarted) {
-            _applySettings();
+        onPressed: () async {
+          if (!widget.hasGuessed) {
+            // Refresh the word if no guess has been made
+            String newWord = await _fetchRandomWord(_getDifficultyText().toLowerCase());
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) {
+                  switch (_difficultyLevel) {
+                    case 0:
+                      return GameEasy(
+                        initialTargetWord: newWord,
+                        toggleTheme: widget.toggleTheme,
+                        onGameStarted: widget.setGameStarted,
+                      );
+                    case 1:
+                      return GameMedium(
+                        initialTargetWord: newWord,
+                        toggleTheme: widget.toggleTheme,
+                        onGameStarted: widget.setGameStarted,
+                      );
+                    case 2:
+                      return GameHard(
+                        initialTargetWord: newWord,
+                        toggleTheme: widget.toggleTheme,
+                        onGameStarted: widget.setGameStarted,
+                      );
+                    default:
+                      return GameEasy(
+                        initialTargetWord: newWord,
+                        toggleTheme: widget.toggleTheme,
+                        onGameStarted: widget.setGameStarted,
+                      );
+                  }
+                },
+              ),
+            );
           } else {
             Navigator.pop(context); // Just go back to the game
           }
@@ -148,41 +198,5 @@ class _SettingPageState extends State<SettingPage> {
       default:
         return 'Easy';
     }
-  }
-
-  void _applySettings() {
-    Widget targetPage;
-
-    switch (_difficultyLevel) {
-      case 0:
-        targetPage = GameEasy(
-            initialTargetWord: 'example', // Fetch a new word based on the difficulty
-            toggleTheme: widget.toggleTheme,
-            onGameStarted: widget.setGameStarted);
-        break;
-      case 1:
-        targetPage = GameMedium(
-            initialTargetWord: 'example', // Fetch a new word based on the difficulty
-            toggleTheme: widget.toggleTheme,
-            onGameStarted: widget.setGameStarted);
-        break;
-      case 2:
-        targetPage = GameHard(
-            initialTargetWord: 'example', // Fetch a new word based on the difficulty
-            toggleTheme: widget.toggleTheme,
-            onGameStarted: widget.setGameStarted);
-        break;
-      default:
-        targetPage = GameEasy(
-            initialTargetWord: 'example', // Fetch a new word based on the difficulty
-            toggleTheme: widget.toggleTheme,
-            onGameStarted: widget.setGameStarted);
-        break;
-    }
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => targetPage),
-    );
   }
 }

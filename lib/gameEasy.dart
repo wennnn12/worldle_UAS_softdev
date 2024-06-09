@@ -11,13 +11,17 @@ class GameEasy extends StatefulWidget {
   final Function(bool) toggleTheme;
   final Function(bool) onGameStarted;
 
-  const GameEasy({required this.initialTargetWord, required this.toggleTheme, required this.onGameStarted});
+  const GameEasy(
+      {required this.initialTargetWord,
+      required this.toggleTheme,
+      required this.onGameStarted});
 
   @override
   State<GameEasy> createState() => _GameEasyState();
 }
 
-class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin {
+class _GameEasyState extends State<GameEasy>
+    with SingleTickerProviderStateMixin {
   late String targetWord;
   List<String> gridContent = List.generate(30, (index) => '');
   List<Color> gridColors = List.generate(30, (index) => Colors.red);
@@ -356,6 +360,7 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
           toggleTheme: widget.toggleTheme,
           setGameStarted: widget.onGameStarted,
           isGameStarted: _isGameStarted,
+          hasGuessed: false, // Reset hasGuessed to false on logout
         ),
       ),
     );
@@ -537,6 +542,8 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
                                   toggleTheme: widget.toggleTheme,
                                   isGameStarted: _isGameStarted,
                                   setGameStarted: widget.onGameStarted,
+                                  hasGuessed: currentRow >
+                                      0, // Pass true if at least one guess is made
                                 ),
                               ),
                             );
@@ -640,7 +647,8 @@ class Keyboard extends StatelessWidget {
   final Function(String) onKeyPressed;
   final Function() onDeletePressed;
 
-  const Keyboard({required this.onKeyPressed, required this.onDeletePressed, Key? key})
+  const Keyboard(
+      {required this.onKeyPressed, required this.onDeletePressed, Key? key})
       : super(key: key);
 
   @override

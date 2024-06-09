@@ -20,6 +20,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   bool _isDarkMode = false;
   bool _isGameStarted = false; // Maintain the game state here
+  bool _hasGuessed = false; // Track if a guess has been made
 
   void _toggleTheme(bool isDarkMode) {
     setState(() {
@@ -33,6 +34,12 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  void _setHasGuessed(bool hasGuessed) {
+    setState(() {
+      _hasGuessed = hasGuessed;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -43,17 +50,20 @@ class _MyAppState extends State<MyApp> {
         toggleTheme: _toggleTheme,
         setGameStarted: _setGameStarted,
         isGameStarted: _isGameStarted,
+        hasGuessed: _hasGuessed,
       ),
       routes: {
         '/mainmenu': (context) => MainMenu(
               toggleTheme: _toggleTheme,
               setGameStarted: _setGameStarted,
               isGameStarted: _isGameStarted,
+              hasGuessed: _hasGuessed,
             ),
         '/settings': (context) => SettingPage(
               toggleTheme: _toggleTheme,
               isGameStarted: _isGameStarted,
               setGameStarted: _setGameStarted,
+              hasGuessed: _hasGuessed,
             ),
       },
     );

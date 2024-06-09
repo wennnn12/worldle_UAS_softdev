@@ -354,6 +354,7 @@ class _GameMediumState extends State<GameMedium>
           toggleTheme: widget.toggleTheme,
           setGameStarted: widget.onGameStarted,
           isGameStarted: _isGameStarted,
+          hasGuessed: false, // Reset hasGuessed to false on logout
         ),
       ),
     );
@@ -530,10 +531,14 @@ class _GameMediumState extends State<GameMedium>
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => SettingPage(
-                                      toggleTheme: widget.toggleTheme,
-                                      isGameStarted: _isGameStarted,
-                                      setGameStarted: widget.onGameStarted)),
+                                builder: (context) => SettingPage(
+                                  toggleTheme: widget.toggleTheme,
+                                  isGameStarted: _isGameStarted,
+                                  setGameStarted: widget.onGameStarted,
+                                  hasGuessed: currentRow >
+                                      0, // Pass true if at least one guess is made
+                                ),
+                              ),
                             );
                           }
                         },

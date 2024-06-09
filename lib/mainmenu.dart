@@ -10,11 +10,13 @@ class MainMenu extends StatelessWidget {
   final Function(bool) toggleTheme;
   final Function(bool) setGameStarted;
   final bool isGameStarted;
+  final bool hasGuessed;
 
   MainMenu({
     required this.toggleTheme,
     required this.setGameStarted,
     required this.isGameStarted,
+    required this.hasGuessed,
   });
 
   Future<String> _fetchRandomWord(String difficulty) async {

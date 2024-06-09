@@ -355,6 +355,7 @@ class _GameHardState extends State<GameHard>
           toggleTheme: widget.toggleTheme,
           setGameStarted: widget.onGameStarted,
           isGameStarted: _isGameStarted,
+          hasGuessed: false, // Reset hasGuessed to false on logout
         ),
       ),
     );
@@ -531,10 +532,14 @@ class _GameHardState extends State<GameHard>
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => SettingPage(
-                                      toggleTheme: widget.toggleTheme,
-                                      isGameStarted: _isGameStarted,
-                                      setGameStarted: widget.onGameStarted)),
+                                builder: (context) => SettingPage(
+                                  toggleTheme: widget.toggleTheme,
+                                  isGameStarted: _isGameStarted,
+                                  setGameStarted: widget.onGameStarted,
+                                  hasGuessed: currentRow >
+                                      0, // Pass true if at least one guess is made
+                                ),
+                              ),
                             );
                           }
                         },
@@ -557,7 +562,7 @@ class _GameHardState extends State<GameHard>
                               toggleDrawer();
                               Navigator.push(
                                 context,
-                                 MaterialPageRoute(
+                                MaterialPageRoute(
                                   builder: (context) => LoginPage(
                                     toggleTheme: widget.toggleTheme,
                                     setGameStarted: widget.onGameStarted,
