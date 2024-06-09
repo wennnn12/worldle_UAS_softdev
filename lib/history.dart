@@ -44,11 +44,13 @@ class _HistoryPageState extends State<HistoryPage> {
         DateTime? dateTime;
         if (timestamp != null) {
           dateTime = timestamp.toDate();
-          date = DateFormat.yMMMd().format(dateTime);        }
+          date = DateFormat.yMMMd().format(dateTime);
+        }
         allHistoryData.add({
           'date': date,
-          'status': 'N/A', // Update this field if status data is available
+          'status': gameData['status'] ?? 'N/A',
           'guesses': gameData['attempts'] ?? 0,
+          'duration': gameData['duration'] ?? 0,
           'difficulty': difficulty,
           'timestamp': dateTime, // Add DateTime for sorting
         });
@@ -100,6 +102,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     date: data['date'] ?? 'N/A',
                     status: data['status'] ?? 'N/A',
                     guesses: data['guesses'] ?? 0,
+                    duration: data['duration'] ?? 0,
                     difficulty: data['difficulty'] ?? 'N/A',
                   );
                 },
@@ -148,6 +151,7 @@ class HistoryCard extends StatelessWidget {
   final String status;
   final int guesses;
   final String difficulty;
+  final int duration;
 
   HistoryCard({
     required this.index,
@@ -155,10 +159,14 @@ class HistoryCard extends StatelessWidget {
     required this.status,
     required this.guesses,
     required this.difficulty,
+    required this.duration,
   });
 
   @override
   Widget build(BuildContext context) {
+    final formattedDuration = Duration(seconds: duration);
+    final durationStr = '${formattedDuration.inMinutes}:${(formattedDuration.inSeconds % 60).toString().padLeft(2, '0')}';
+
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10.0),
@@ -170,7 +178,7 @@ class HistoryCard extends StatelessWidget {
           children: [
             Container(
               width: 40,
-              height: 110, // Ensuring the numbering area is a consistent height
+              height: 133, // Ensuring the numbering area is a consistent height
               color: status == 'WIN' ? Colors.green[200] : Colors.red[200],
               child: Center(
                 child: Text(
@@ -243,12 +251,24 @@ class HistoryCard extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Text(
-                          difficulty,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              durationStr,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              difficulty,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
