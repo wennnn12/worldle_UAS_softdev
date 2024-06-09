@@ -3,9 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'leaderboard.dart';
 import 'result_dialog.dart';
-import 'login.dart'; // Import the login.dart file
-import 'setting.dart'; // Add this import
-import 'mainmenu.dart'; // Add this import
+import 'login.dart';
+import 'setting.dart';
+import 'mainmenu.dart';
 
 class GameMedium extends StatefulWidget {
   final String initialTargetWord;
@@ -45,7 +45,7 @@ class _GameMediumState extends State<GameMedium>
   @override
   void initState() {
     super.initState();
-    targetWord = widget.initialTargetWord;
+    _fetchRandomWord(); // Fetch a new random word during initialization
     _animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 250),
@@ -156,7 +156,6 @@ class _GameMediumState extends State<GameMedium>
       attempts++;
       bool hasWon = true;
 
-      // First pass: Identify and mark correct letters (green)
       Map<String, int> targetLetterCounts = {};
       for (int i = 0; i < targetWord.length; i++) {
         String letter = targetWord[i];
@@ -177,7 +176,6 @@ class _GameMediumState extends State<GameMedium>
         }
       }
 
-      // Second pass: Mark present but misplaced letters (yellow)
       for (int i = 0; i < 5; i++) {
         if (gridColors[startIndex + i] != Colors.green &&
             targetLetterCounts[gridContent[startIndex + i]] != null &&
@@ -294,7 +292,6 @@ class _GameMediumState extends State<GameMedium>
           'highestWinStreak': highestWinStreak,
         });
 
-        // Update the local state to reflect new stats
         setState(() {
           userStats = {
             'matchesPlayed': matchesPlayed,
@@ -314,7 +311,8 @@ class _GameMediumState extends State<GameMedium>
     });
   }
 
-  void handleReset() {
+  void handleReset() async {
+    await _fetchRandomWord(); // Fetch a new random word on reset
     setState(() {
       _isGameStarted = false;
       widget.onGameStarted(false);
@@ -342,12 +340,11 @@ class _GameMediumState extends State<GameMedium>
     setState(() {
       user = null;
       username = null;
-      // Revert settings to default (easy mode)
       _difficultyLevel = 0;
       _isDarkMode = false;
     });
-    await _saveUserSettings(); // Save settings on logout
-    widget.toggleTheme(false); // Revert to light theme on logout
+    await _saveUserSettings();
+    widget.toggleTheme(false);
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -355,7 +352,7 @@ class _GameMediumState extends State<GameMedium>
           toggleTheme: widget.toggleTheme,
           setGameStarted: widget.onGameStarted,
           isGameStarted: _isGameStarted,
-          hasGuessed: false, // Reset hasGuessed to false on logout
+          hasGuessed: false,
         ),
       ),
     );
@@ -383,7 +380,7 @@ class _GameMediumState extends State<GameMedium>
               TextButton(
                 child: Text("Okay"),
                 onPressed: () {
-                  Navigator.of(context).pop(); // Close the dialog
+                  Navigator.of(context).pop();
                 },
               ),
             ],

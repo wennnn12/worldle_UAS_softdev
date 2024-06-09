@@ -45,7 +45,11 @@ class _GameEasyState extends State<GameEasy>
   @override
   void initState() {
     super.initState();
-    targetWord = widget.initialTargetWord;
+    _fetchRandomWord().then((newWord) {
+      setState(() {
+        targetWord = newWord;
+      });
+    });
     _animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 250),
@@ -99,14 +103,12 @@ class _GameEasyState extends State<GameEasy>
     }
   }
 
-  Future<void> _fetchRandomWord() async {
+  Future<String> _fetchRandomWord() async {
     final wordList =
         await FirebaseFirestore.instance.collection('Wordlists').get();
     final words = wordList.docs.map((doc) => doc['word'] as String).toList();
     words.shuffle();
-    setState(() {
-      targetWord = words.isNotEmpty ? words.first : 'ERROR';
-    });
+    return words.isNotEmpty ? words.first : 'ERROR';
   }
 
   void handleKeyPress(String letter) {
