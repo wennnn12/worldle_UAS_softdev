@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:worldle_game/history.dart';
 import 'leaderboard.dart';
 import 'result_dialog.dart';
 import 'login.dart'; // Import the login.dart file
@@ -566,6 +567,13 @@ class _GameHardState extends State<GameHard>
                                     _isDarkMode ? Colors.white : Colors.black)),
                         onTap: () {
                           toggleDrawer();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  HistoryPage(), // Ensure you have imported HistoryPage
+                            ),
+                          );
                         },
                       ),
                       ListTile(
