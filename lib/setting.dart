@@ -74,7 +74,7 @@ class _SettingPageState extends State<SettingPage> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pushReplacementNamed(context, '/mainmenu');
+            Navigator.pop(context);
           },
         ),
         title: Center(child: Text('SETTING')),
