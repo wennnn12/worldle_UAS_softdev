@@ -9,8 +9,9 @@ import 'setting.dart';
 class GameEasy extends StatefulWidget {
   final String initialTargetWord;
   final Function(bool) toggleTheme;
+  final Function(bool) onGameStarted;
 
-  const GameEasy({Key? key, required this.initialTargetWord, required this.toggleTheme}) : super(key: key);
+  const GameEasy({required this.initialTargetWord, required this.toggleTheme, required this.onGameStarted});
 
   @override
   State<GameEasy> createState() => _GameEasyState();
@@ -22,7 +23,7 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
   List<Color> gridColors = List.generate(30, (index) => Colors.red);
   int currentRow = 0;
   int attempts = 0;
-  bool isGuest = true;  // Assume user is a guest by default
+  bool isGuest = true; // Assume user is a guest by default
   User? currentUser;
   Map<String, dynamic>? userStats; // Store user stats
 
@@ -34,6 +35,7 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
   User? user;
   int _difficultyLevel = 0; // Default to easy mode
   bool _isDarkMode = false; // Default to light mode
+  bool _isGameStarted = false;
 
   @override
   void initState() {
@@ -43,7 +45,8 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
       vsync: this,
       duration: Duration(milliseconds: 250),
     );
-    _slideAnimation = Tween<Offset>(begin: Offset(-1, 0), end: Offset(0, 0)).animate(_animationController);
+    _slideAnimation = Tween<Offset>(begin: Offset(-1, 0), end: Offset(0, 0))
+        .animate(_animationController);
     _checkUser();
   }
 
@@ -58,7 +61,11 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
   }
 
   Future<void> _fetchUserStats() async {
-    final statsRef = FirebaseFirestore.instance.collection('users').doc(currentUser!.uid).collection('stats').doc('easy');
+    final statsRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser!.uid)
+        .collection('stats')
+        .doc('easy');
     final statsDoc = await statsRef.get();
     if (statsDoc.exists) {
       setState(() {
@@ -67,7 +74,10 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
     }
     user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .get();
       setState(() {
         username = userDoc.get('username');
         _difficultyLevel = userDoc.get('difficultyLevel') ?? 0;
@@ -85,7 +95,8 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
   }
 
   Future<void> _fetchRandomWord() async {
-    final wordList = await FirebaseFirestore.instance.collection('Wordlists').get();
+    final wordList =
+        await FirebaseFirestore.instance.collection('Wordlists').get();
     final words = wordList.docs.map((doc) => doc['word'] as String).toList();
     words.shuffle();
     setState(() {
@@ -122,6 +133,10 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
   }
 
   Future<void> handleSubmit() async {
+    setState(() {
+      _isGameStarted = true;
+      widget.onGameStarted(true);
+    });
     int startIndex = currentRow * 5;
     int endIndex = startIndex + 5;
 
@@ -183,102 +198,127 @@ class _GameEasyState extends State<GameEasy> with SingleTickerProviderStateMixin
     }
   }
 
-Future<Map<int, int>> _fetchGuessStats(String difficulty) async {
-  if (isGuest) return {};
+  Future<Map<int, int>> _fetchGuessStats(String difficulty) async {
+    if (isGuest) return {};
 
-  final guessStatsRef = FirebaseFirestore.instance.collection('users').doc(currentUser!.uid).collection('guessStats').doc(difficulty).collection('games');
-  final guessStatsDocs = await guessStatsRef.get();
-  Map<int, int> guessStats = {};
+    final guessStatsRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser!.uid)
+        .collection('guessStats')
+        .doc(difficulty)
+        .collection('games');
+    final guessStatsDocs = await guessStatsRef.get();
+    Map<int, int> guessStats = {};
 
-  for (var doc in guessStatsDocs.docs) {
-    int attempts = doc['attempts'];
-    if (guessStats.containsKey(attempts)) {
-      guessStats[attempts] = guessStats[attempts]! + 1;
-    } else {
-      guessStats[attempts] = 1;
+    for (var doc in guessStatsDocs.docs) {
+      int attempts = doc['attempts'];
+      if (guessStats.containsKey(attempts)) {
+        guessStats[attempts] = guessStats[attempts]! + 1;
+      } else {
+        guessStats[attempts] = 1;
+      }
     }
+
+    return guessStats;
   }
 
-  return guessStats;
-}
+  void _showResultDialog(bool hasWon) async {
+    String difficulty = 'easy'; // Replace with current difficulty
+    int barsCount = difficulty == 'easy'
+        ? 6
+        : difficulty == 'medium'
+            ? 5
+            : 4;
+    Map<int, int> guessStats = await _fetchGuessStats(difficulty);
 
-void _showResultDialog(bool hasWon) async {
-  String difficulty = 'easy'; // Replace with current difficulty
-  int barsCount = difficulty == 'easy' ? 6 : difficulty == 'medium' ? 5 : 4;
-  Map<int, int> guessStats = await _fetchGuessStats(difficulty);
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => ResultDialog(
+        hasWon: hasWon,
+        attempts: attempts,
+        onRetry: () async {
+          await _fetchRandomWord();
+          handleReset();
+        },
+        stats: isGuest
+            ? null
+            : userStats, // Only show stats if user is not a guest
+        isGuest: isGuest,
+        guessStats: guessStats,
+        barsCount: barsCount,
+      ),
+    );
+  }
 
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => ResultDialog(
-      hasWon: hasWon,
-      attempts: attempts,
-      onRetry: () async {
-        await _fetchRandomWord();
-        handleReset();
-      },
-      stats: isGuest ? null : userStats, // Only show stats if user is not a guest
-      isGuest: isGuest,
-      guessStats: guessStats,
-      barsCount: barsCount,
-    ),
-  );
-}
+  Future<void> _updateStats(bool hasWon) async {
+    if (isGuest) return;
 
-Future<void> _updateStats(bool hasWon) async {
-  if (isGuest) return;
+    final difficulty = 'easy'; // Replace with current difficulty
+    final statsRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser!.uid)
+        .collection('stats')
+        .doc(difficulty);
+    final guessStatsRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser!.uid)
+        .collection('guessStats')
+        .doc(difficulty)
+        .collection('games')
+        .doc();
 
-  final difficulty = 'easy'; // Replace with current difficulty
-  final statsRef = FirebaseFirestore.instance.collection('users').doc(currentUser!.uid).collection('stats').doc(difficulty);
-  final guessStatsRef = FirebaseFirestore.instance.collection('users').doc(currentUser!.uid).collection('guessStats').doc(difficulty).collection('games').doc();
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final statsDoc = await transaction.get(statsRef);
 
-  await FirebaseFirestore.instance.runTransaction((transaction) async {
-    final statsDoc = await transaction.get(statsRef);
+      if (!statsDoc.exists) {
+        transaction.set(statsRef, {
+          'matchesPlayed': 1,
+          'wins': hasWon ? 1 : 0,
+          'winStreak': hasWon ? 1 : 0,
+          'highestWinStreak': hasWon ? 1 : 0,
+        });
+      } else {
+        final data = statsDoc.data()!;
+        final matchesPlayed = data['matchesPlayed'] + 1;
+        final wins = data['wins'] + (hasWon ? 1 : 0);
+        final winStreak = hasWon ? data['winStreak'] + 1 : 0;
+        final highestWinStreak = hasWon && winStreak > data['highestWinStreak']
+            ? winStreak
+            : data['highestWinStreak'];
 
-    if (!statsDoc.exists) {
-      transaction.set(statsRef, {
-        'matchesPlayed': 1,
-        'wins': hasWon ? 1 : 0,
-        'winStreak': hasWon ? 1 : 0,
-        'highestWinStreak': hasWon ? 1 : 0,
-      });
-    } else {
-      final data = statsDoc.data()!;
-      final matchesPlayed = data['matchesPlayed'] + 1;
-      final wins = data['wins'] + (hasWon ? 1 : 0);
-      final winStreak = hasWon ? data['winStreak'] + 1 : 0;
-      final highestWinStreak = hasWon && winStreak > data['highestWinStreak'] ? winStreak : data['highestWinStreak'];
-
-      transaction.update(statsRef, {
-        'matchesPlayed': matchesPlayed,
-        'wins': wins,
-        'winStreak': winStreak,
-        'highestWinStreak': highestWinStreak,
-      });
-
-      // Update the local state to reflect new stats
-      setState(() {
-        userStats = {
+        transaction.update(statsRef, {
           'matchesPlayed': matchesPlayed,
-          'winPercentage': (wins / matchesPlayed) * 100,
+          'wins': wins,
           'winStreak': winStreak,
           'highestWinStreak': highestWinStreak,
-        };
-      });
-    }
+        });
 
-    // Save guess stats only if the user has won
-    if (hasWon) {
-      transaction.set(guessStatsRef, {
-        'attempts': attempts,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-    }
-  });
-}
+        // Update the local state to reflect new stats
+        setState(() {
+          userStats = {
+            'matchesPlayed': matchesPlayed,
+            'winPercentage': (wins / matchesPlayed) * 100,
+            'winStreak': winStreak,
+            'highestWinStreak': highestWinStreak,
+          };
+        });
+      }
+
+      // Save guess stats only if the user has won
+      if (hasWon) {
+        transaction.set(guessStatsRef, {
+          'attempts': attempts,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+      }
+    });
+  }
 
   void handleReset() {
     setState(() {
+      _isGameStarted = false;
+      widget.onGameStarted(false);
       gridContent = List.generate(30, (index) => '');
       gridColors = List.generate(30, (index) => Colors.red);
       currentRow = 0;
@@ -311,7 +351,13 @@ Future<void> _updateStats(bool hasWon) async {
     widget.toggleTheme(false); // Revert to light theme on logout
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => MainMenu(toggleTheme: widget.toggleTheme)),
+      MaterialPageRoute(
+        builder: (context) => MainMenu(
+          toggleTheme: widget.toggleTheme,
+          setGameStarted: widget.onGameStarted,
+          isGameStarted: _isGameStarted,
+        ),
+      ),
     );
   }
 
@@ -421,12 +467,14 @@ Future<void> _updateStats(bool hasWon) async {
                             children: [
                               ElevatedButton(
                                 onPressed: handleSubmit,
-                                child: Text('Submit', style: TextStyle(fontSize: 18)),
+                                child: Text('Submit',
+                                    style: TextStyle(fontSize: 18)),
                               ),
                               SizedBox(width: 20),
                               ElevatedButton(
                                 onPressed: handleReset,
-                                child: Text('Reset', style: TextStyle(fontSize: 18)),
+                                child: Text('Reset',
+                                    style: TextStyle(fontSize: 18)),
                               ),
                             ],
                           ),
@@ -459,16 +507,24 @@ Future<void> _updateStats(bool hasWon) async {
                   child: Column(
                     children: [
                       ListTile(
-                        leading: Icon(Icons.help_outline, color: _isDarkMode ? Colors.white : Colors.black),
-                        title: Text('Learn?', style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black)),
+                        leading: Icon(Icons.help_outline,
+                            color: _isDarkMode ? Colors.white : Colors.black),
+                        title: Text('Learn?',
+                            style: TextStyle(
+                                color:
+                                    _isDarkMode ? Colors.white : Colors.black)),
                         onTap: () {
                           // Handle Learn tap
                           toggleDrawer();
                         },
                       ),
                       ListTile(
-                        leading: Icon(Icons.settings, color: _isDarkMode ? Colors.white : Colors.black),
-                        title: Text('Setting', style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black)),
+                        leading: Icon(Icons.settings,
+                            color: _isDarkMode ? Colors.white : Colors.black),
+                        title: Text('Setting',
+                            style: TextStyle(
+                                color:
+                                    _isDarkMode ? Colors.white : Colors.black)),
                         onTap: () {
                           toggleDrawer();
                           if (user == null) {
@@ -476,14 +532,24 @@ Future<void> _updateStats(bool hasWon) async {
                           } else {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => SettingPage(toggleTheme: widget.toggleTheme)),
+                              MaterialPageRoute(
+                                builder: (context) => SettingPage(
+                                  toggleTheme: widget.toggleTheme,
+                                  isGameStarted: _isGameStarted,
+                                  setGameStarted: widget.onGameStarted,
+                                ),
+                              ),
                             );
                           }
                         },
                       ),
                       ListTile(
-                        leading: Icon(Icons.history, color: _isDarkMode ? Colors.white : Colors.black),
-                        title: Text('History', style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black)),
+                        leading: Icon(Icons.history,
+                            color: _isDarkMode ? Colors.white : Colors.black),
+                        title: Text('History',
+                            style: TextStyle(
+                                color:
+                                    _isDarkMode ? Colors.white : Colors.black)),
                         onTap: () {
                           // Handle History tap
                           toggleDrawer();
@@ -496,7 +562,13 @@ Future<void> _updateStats(bool hasWon) async {
                               toggleDrawer();
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => LoginPage(toggleTheme: widget.toggleTheme)),
+                                MaterialPageRoute(
+                                  builder: (context) => LoginPage(
+                                    toggleTheme: widget.toggleTheme,
+                                    setGameStarted: widget.onGameStarted,
+                                    isGameStarted: _isGameStarted,
+                                  ),
+                                ),
                               );
                             } else {
                               _logout();
@@ -505,8 +577,12 @@ Future<void> _updateStats(bool hasWon) async {
                           },
                           child: Text(user == null ? 'Login' : 'Logout'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: user == null ? Colors.white : Colors.red, // Background color
-                            foregroundColor: user == null ? Colors.black : Colors.white, // Text color
+                            backgroundColor: user == null
+                                ? Colors.white
+                                : Colors.red, // Background color
+                            foregroundColor: user == null
+                                ? Colors.black
+                                : Colors.white, // Text color
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),
@@ -531,7 +607,8 @@ class Grid extends StatelessWidget {
   final List<String> gridContent;
   final List<Color> gridColors;
 
-  const Grid({required this.gridContent, required this.gridColors, Key? key}) : super(key: key);
+  const Grid({required this.gridContent, required this.gridColors, Key? key})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -563,14 +640,38 @@ class Keyboard extends StatelessWidget {
   final Function(String) onKeyPressed;
   final Function() onDeletePressed;
 
-  const Keyboard({required this.onKeyPressed, required this.onDeletePressed, Key? key}) : super(key: key);
+  const Keyboard({required this.onKeyPressed, required this.onDeletePressed, Key? key})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final List<String> keys = [
-      'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
-      'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L',
-      'Z', 'X', 'C', 'V', 'B', 'N', 'M'
+      'Q',
+      'W',
+      'E',
+      'R',
+      'T',
+      'Y',
+      'U',
+      'I',
+      'O',
+      'P',
+      'A',
+      'S',
+      'D',
+      'F',
+      'G',
+      'H',
+      'J',
+      'K',
+      'L',
+      'Z',
+      'X',
+      'C',
+      'V',
+      'B',
+      'N',
+      'M'
     ];
 
     return Column(

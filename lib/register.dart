@@ -9,8 +9,14 @@ class RegisterPage extends StatelessWidget {
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmPasswordController = TextEditingController();
   final Function(bool) toggleTheme;
+  final Function(bool) setGameStarted;
+  final bool isGameStarted;
 
-  RegisterPage({required this.toggleTheme});
+  RegisterPage({
+    required this.toggleTheme,
+    required this.setGameStarted,
+    required this.isGameStarted,
+  });
 
   Future<void> _registerUser(BuildContext context) async {
     try {
@@ -44,7 +50,13 @@ class RegisterPage extends StatelessWidget {
       // Redirect to the login page upon successful registration
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => LoginPage(toggleTheme: toggleTheme)),
+        MaterialPageRoute(
+          builder: (context) => LoginPage(
+            toggleTheme: toggleTheme,
+            setGameStarted: setGameStarted,
+            isGameStarted: isGameStarted,
+          ),
+        ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(

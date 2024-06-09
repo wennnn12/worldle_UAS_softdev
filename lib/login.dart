@@ -12,8 +12,14 @@ class LoginPage extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final Function(bool) toggleTheme;
+  final Function(bool) setGameStarted;
+  final bool isGameStarted;
 
-  LoginPage({required this.toggleTheme});
+  LoginPage({
+    required this.toggleTheme,
+    required this.setGameStarted,
+    required this.isGameStarted,
+  });
 
   Future<String> _fetchRandomWord() async {
     final wordList = await FirebaseFirestore.instance.collection('Wordlists').get();
@@ -21,7 +27,7 @@ class LoginPage extends StatelessWidget {
     words.shuffle();
     return words.isNotEmpty ? words.first : 'ERROR'; // Fallback word if list is empty
   }
-  
+
   Future<void> _loginUser(BuildContext context) async {
     try {
       UserCredential userCredential =
@@ -65,16 +71,32 @@ class LoginPage extends StatelessWidget {
         Widget targetPage;
         switch (difficultyLevel) {
           case 0:
-            targetPage = GameEasy(initialTargetWord: randomWord, toggleTheme: toggleTheme);
+            targetPage = GameEasy(
+              initialTargetWord: randomWord,
+              toggleTheme: toggleTheme,
+              onGameStarted: setGameStarted,
+            );
             break;
           case 1:
-            targetPage = GameMedium(initialTargetWord: randomWord, toggleTheme: toggleTheme);
+            targetPage = GameMedium(
+              initialTargetWord: randomWord,
+              toggleTheme: toggleTheme,
+              onGameStarted: setGameStarted,
+            );
             break;
           case 2:
-            targetPage = GameHard(initialTargetWord: randomWord, toggleTheme: toggleTheme);
+            targetPage = GameHard(
+              initialTargetWord: randomWord,
+              toggleTheme: toggleTheme,
+              onGameStarted: setGameStarted,
+            );
             break;
           default:
-            targetPage = GameEasy(initialTargetWord: randomWord, toggleTheme: toggleTheme);
+            targetPage = GameEasy(
+              initialTargetWord: randomWord,
+              toggleTheme: toggleTheme,
+              onGameStarted: setGameStarted,
+            );
             break;
         }
 
@@ -156,7 +178,13 @@ class LoginPage extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => RegisterPage(toggleTheme: toggleTheme,)),
+                    MaterialPageRoute(
+                      builder: (context) => RegisterPage(
+                        toggleTheme: toggleTheme,
+                        setGameStarted: setGameStarted,
+                        isGameStarted: isGameStarted,
+                      ),
+                    ),
                   );
                 },
                 child: Text(

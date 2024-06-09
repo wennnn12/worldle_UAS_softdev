@@ -7,8 +7,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SettingPage extends StatefulWidget {
   final Function(bool) toggleTheme;
+  final bool isGameStarted;
+  final Function(bool) setGameStarted;
 
-  SettingPage({required this.toggleTheme});
+  SettingPage({required this.toggleTheme, required this.isGameStarted, required this.setGameStarted});
 
   @override
   _SettingPageState createState() => _SettingPageState();
@@ -22,6 +24,7 @@ class _SettingPageState extends State<SettingPage> {
   @override
   void initState() {
     super.initState();
+    _isDarkMode = widget.isGameStarted; // Initialize _isDarkMode with the game state
     _loadUserSettings();
   }
 
@@ -33,18 +36,8 @@ class _SettingPageState extends State<SettingPage> {
           .doc(user!.uid)
           .get();
       setState(() {
-        _difficultyLevel = 0; // Default value
-        _isDarkMode = false; // Default value
-        try {
-          _difficultyLevel = userDoc.get('difficultyLevel');
-        } catch (e) {
-          // Field doesn't exist, keep default value
-        }
-        try {
-          _isDarkMode = userDoc.get('isDarkMode');
-        } catch (e) {
-          // Field doesn't exist, keep default value
-        }
+        _difficultyLevel = userDoc.get('difficultyLevel') ?? 0; // Default value
+        _isDarkMode = userDoc.get('isDarkMode') ?? false; // Default value
       });
     }
   }
@@ -97,12 +90,14 @@ class _SettingPageState extends State<SettingPage> {
                     max: 2,
                     divisions: 2,
                     label: _getDifficultyText(),
-                    onChanged: (double value) {
-                      setState(() {
-                        _difficultyLevel = value.round();
-                        _saveUserSettings(); // Save settings on change
-                      });
-                    },
+                    onChanged: widget.isGameStarted
+                        ? null
+                        : (double value) {
+                            setState(() {
+                              _difficultyLevel = value.round();
+                              _saveUserSettings(); // Save settings on change
+                            });
+                          },
                   ),
                   SizedBox(height: 5),
                   Text(
@@ -112,13 +107,16 @@ class _SettingPageState extends State<SettingPage> {
                   SwitchListTile(
                     title: Text(_isDarkMode ? 'Night Mode' : 'Light Mode'),
                     value: _isDarkMode,
-                    onChanged: (bool value) {
-                      setState(() {
-                        _isDarkMode = value;
-                        widget.toggleTheme(_isDarkMode);
-                        _saveUserSettings(); // Save settings on change
-                      });
-                    },
+                    onChanged: widget.isGameStarted
+                        ? null
+                        : (bool value) {
+                            // Disable if the game has started
+                            setState(() {
+                              _isDarkMode = value;
+                              widget.toggleTheme(_isDarkMode);
+                              _saveUserSettings(); // Save settings on change
+                            });
+                          },
                   ),
                 ],
               ),
@@ -127,7 +125,13 @@ class _SettingPageState extends State<SettingPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _applySettings,
+        onPressed: () {
+          if (!widget.isGameStarted) {
+            _applySettings();
+          } else {
+            Navigator.pop(context); // Just go back to the game
+          }
+        },
         child: Icon(Icons.check),
       ),
     );
@@ -152,23 +156,27 @@ class _SettingPageState extends State<SettingPage> {
     switch (_difficultyLevel) {
       case 0:
         targetPage = GameEasy(
-            initialTargetWord: 'example',
-            toggleTheme: widget.toggleTheme); // Provide the initial target word
+            initialTargetWord: 'example', // Fetch a new word based on the difficulty
+            toggleTheme: widget.toggleTheme,
+            onGameStarted: widget.setGameStarted);
         break;
       case 1:
         targetPage = GameMedium(
-            initialTargetWord: 'example',
-            toggleTheme: widget.toggleTheme); // Provide the initial target word
+            initialTargetWord: 'example', // Fetch a new word based on the difficulty
+            toggleTheme: widget.toggleTheme,
+            onGameStarted: widget.setGameStarted);
         break;
       case 2:
         targetPage = GameHard(
-            initialTargetWord: 'example',
-            toggleTheme: widget.toggleTheme); // Provide the initial target word
+            initialTargetWord: 'example', // Fetch a new word based on the difficulty
+            toggleTheme: widget.toggleTheme,
+            onGameStarted: widget.setGameStarted);
         break;
       default:
         targetPage = GameEasy(
-            initialTargetWord: 'example',
-            toggleTheme: widget.toggleTheme); // Provide the initial target word
+            initialTargetWord: 'example', // Fetch a new word based on the difficulty
+            toggleTheme: widget.toggleTheme,
+            onGameStarted: widget.setGameStarted);
         break;
     }
 
