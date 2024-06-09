@@ -48,11 +48,13 @@ class _HistoryPageState extends State<HistoryPage> {
         }
         allHistoryData.add({
           'date': date,
-          'status': gameData['status'] ?? 'N/A',
+          'status': gameData['status'] ??
+              'N/A', // Update this field if status data is available
           'guesses': gameData['attempts'] ?? 0,
-          'duration': gameData['duration'] ?? 0,
           'difficulty': difficulty,
           'timestamp': dateTime, // Add DateTime for sorting
+          'targetWord':
+              gameData['targetWord'] ?? 'N/A', // Fetch the target word
         });
       }
     }
@@ -73,8 +75,8 @@ class _HistoryPageState extends State<HistoryPage> {
   Widget build(BuildContext context) {
     int startIndex = currentPage * itemsPerPage;
     int endIndex = startIndex + itemsPerPage;
-    List<Map<String, dynamic>> pageData = historyData.sublist(
-        startIndex, endIndex > historyData.length ? historyData.length : endIndex);
+    List<Map<String, dynamic>> pageData = historyData.sublist(startIndex,
+        endIndex > historyData.length ? historyData.length : endIndex);
 
     return Scaffold(
       appBar: AppBar(
@@ -104,6 +106,8 @@ class _HistoryPageState extends State<HistoryPage> {
                     guesses: data['guesses'] ?? 0,
                     duration: data['duration'] ?? 0,
                     difficulty: data['difficulty'] ?? 'N/A',
+                    targetWord:
+                        data['targetWord'] ?? 'N/A', // Pass the target word
                   );
                 },
               ),
@@ -152,6 +156,7 @@ class HistoryCard extends StatelessWidget {
   final int guesses;
   final String difficulty;
   final int duration;
+  final String targetWord;
 
   HistoryCard({
     required this.index,
@@ -160,12 +165,14 @@ class HistoryCard extends StatelessWidget {
     required this.guesses,
     required this.difficulty,
     required this.duration,
+    required this.targetWord,
   });
 
   @override
   Widget build(BuildContext context) {
     final formattedDuration = Duration(seconds: duration);
-    final durationStr = '${formattedDuration.inMinutes}:${(formattedDuration.inSeconds % 60).toString().padLeft(2, '0')}';
+    final durationStr =
+        '${formattedDuration.inMinutes}:${(formattedDuration.inSeconds % 60).toString().padLeft(2, '0')}';
 
     return Card(
       shape: RoundedRectangleBorder(
@@ -178,7 +185,7 @@ class HistoryCard extends StatelessWidget {
           children: [
             Container(
               width: 40,
-              height: 133, // Ensuring the numbering area is a consistent height
+              height: 110, // Ensuring the numbering area is a consistent height
               color: status == 'WIN' ? Colors.green[200] : Colors.red[200],
               child: Center(
                 child: Text(
@@ -225,20 +232,34 @@ class HistoryCard extends StatelessWidget {
                     ),
                     Divider(color: Colors.black, thickness: 1),
                     Row(
-                      children: List.generate(5, (i) => Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 2.0),
-                        child: Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            border: Border.all(
-                              color: Colors.black,
-                              width: 1,
-                            ),
-                          ),
-                        ),
-                      )),
+                      children: List.generate(
+                          5,
+                          (i) => Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 2.0),
+                                child: Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    border: Border.all(
+                                      color: Colors.black,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      i < targetWord.length
+                                          ? targetWord[i]
+                                          : '',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )),
                     ),
                     SizedBox(height: 8),
                     Row(
@@ -251,24 +272,19 @@ class HistoryCard extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              durationStr,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              difficulty,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                        Text(
+                          durationStr,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          difficulty,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),

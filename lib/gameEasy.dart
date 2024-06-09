@@ -42,17 +42,12 @@ class _GameEasyState extends State<GameEasy>
   int _difficultyLevel = 0; // Default to easy mode
   bool _isDarkMode = false; // Default to light mode
   bool _isGameStarted = false;
-  DateTime? _gameStartTime;
-
+  late Stopwatch _stopwatch; // Add a stopwatch to track game duration
 
   @override
   void initState() {
     super.initState();
-    _fetchRandomWord().then((newWord) {
-      setState(() {
-        targetWord = newWord;
-      });
-    });
+    targetWord = widget.initialTargetWord;
     _animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 250),
@@ -60,6 +55,7 @@ class _GameEasyState extends State<GameEasy>
     _slideAnimation = Tween<Offset>(begin: Offset(-1, 0), end: Offset(0, 0))
         .animate(_animationController);
     _checkUser();
+    _stopwatch = Stopwatch(); // Initialize the stopwatch
   }
 
   Future<void> _checkUser() async {
@@ -143,75 +139,76 @@ class _GameEasyState extends State<GameEasy>
   }
 
   Future<void> handleSubmit() async {
-  setState(() {
-    _isGameStarted = true;
-    widget.onGameStarted(true);
-    if (_gameStartTime == null) {
-      _gameStartTime = DateTime.now(); // Set the start time when the game starts
+    if (!_stopwatch.isRunning) {
+      _stopwatch.start(); // Start the stopwatch when the game starts
     }
-  });
 
-  int startIndex = currentRow * 5;
-  int endIndex = startIndex + 5;
+    setState(() {
+      _isGameStarted = true;
+      widget.onGameStarted(true);
+    });
 
-  bool isRowComplete = true;
-  for (int i = startIndex; i < endIndex; i++) {
-    if (gridContent[i].isEmpty) {
-      isRowComplete = false;
-      break;
-    }
-  }
+    int startIndex = currentRow * 5;
+    int endIndex = startIndex + 5;
 
-  if (isRowComplete) {
-    attempts++;
-    bool hasWon = true;
-
-    // First pass: Identify and mark correct letters (green)
-    Map<String, int> targetLetterCounts = {};
-    for (int i = 0; i < targetWord.length; i++) {
-      String letter = targetWord[i];
-      if (!targetLetterCounts.containsKey(letter)) {
-        targetLetterCounts[letter] = 0;
+    bool isRowComplete = true;
+    for (int i = startIndex; i < endIndex; i++) {
+      if (gridContent[i].isEmpty) {
+        isRowComplete = false;
+        break;
       }
-      targetLetterCounts[letter] = targetLetterCounts[letter]! + 1;
     }
 
-    for (int i = 0; i < 5; i++) {
-      if (gridContent[startIndex + i] == targetWord[i]) {
-        gridColors[startIndex + i] = Colors.green;
-        targetLetterCounts[gridContent[startIndex + i]] =
-            targetLetterCounts[gridContent[startIndex + i]]! - 1;
+    if (isRowComplete) {
+      attempts++;
+      bool hasWon = true;
+
+      // First pass: Identify and mark correct letters (green)
+      Map<String, int> targetLetterCounts = {};
+      for (int i = 0; i < targetWord.length; i++) {
+        String letter = targetWord[i];
+        if (!targetLetterCounts.containsKey(letter)) {
+          targetLetterCounts[letter] = 0;
+        }
+        targetLetterCounts[letter] = targetLetterCounts[letter]! + 1;
+      }
+
+      for (int i = 0; i < 5; i++) {
+        if (gridContent[startIndex + i] == targetWord[i]) {
+          gridColors[startIndex + i] = Colors.green;
+          targetLetterCounts[gridContent[startIndex + i]] =
+              targetLetterCounts[gridContent[startIndex + i]]! - 1;
+        } else {
+          gridColors[startIndex + i] = Colors.grey;
+          hasWon = false;
+        }
+      }
+
+      // Second pass: Mark present but misplaced letters (yellow)
+      for (int i = 0; i < 5; i++) {
+        if (gridColors[startIndex + i] != Colors.green &&
+            targetLetterCounts[gridContent[startIndex + i]] != null &&
+            targetLetterCounts[gridContent[startIndex + i]]! > 0) {
+          gridColors[startIndex + i] = Colors.yellow;
+          targetLetterCounts[gridContent[startIndex + i]]! - 1;
+        }
+      }
+
+      if (hasWon) {
+        _stopwatch.stop(); // Stop the stopwatch if the user wins
+        await _updateStats(true);
+        _showResultDialog(true);
+      } else if (currentRow >= 5) {
+        _stopwatch.stop(); // Stop the stopwatch if the user loses
+        await _updateStats(false);
+        _showResultDialog(false);
       } else {
-        gridColors[startIndex + i] = Colors.grey;
-        hasWon = false;
+        setState(() {
+          currentRow++;
+        });
       }
-    }
-
-    // Second pass: Mark present but misplaced letters (yellow)
-    for (int i = 0; i < 5; i++) {
-      if (gridColors[startIndex + i] != Colors.green &&
-          targetLetterCounts[gridContent[startIndex + i]] != null &&
-          targetLetterCounts[gridContent[startIndex + i]]! > 0) {
-        gridColors[startIndex + i] = Colors.yellow;
-        targetLetterCounts[gridContent[startIndex + i]] =
-            targetLetterCounts[gridContent[startIndex + i]]! - 1;
-      }
-    }
-
-    if (hasWon) {
-      await _updateStats(true);
-      _showResultDialog(true);
-    } else if (currentRow >= 5) {
-      await _updateStats(false);
-      _showResultDialog(false);
-    } else {
-      setState(() {
-        currentRow++;
-      });
     }
   }
-}
-
 
   Future<Map<int, int>> _fetchGuessStats(String difficulty) async {
     if (isGuest) return {};
@@ -253,7 +250,11 @@ class _GameEasyState extends State<GameEasy>
         hasWon: hasWon,
         attempts: attempts,
         onRetry: () async {
-          await _fetchRandomWord();
+          await _fetchRandomWord().then((newWord) {
+            setState(() {
+              targetWord = newWord;
+            });
+          });
           handleReset();
         },
         stats: isGuest
@@ -267,72 +268,70 @@ class _GameEasyState extends State<GameEasy>
   }
 
   Future<void> _updateStats(bool hasWon) async {
-  if (isGuest) return;
+    if (isGuest) return;
 
-  final difficulty = 'easy'; // Replace with current difficulty
-  final statsRef = FirebaseFirestore.instance
-      .collection('users')
-      .doc(currentUser!.uid)
-      .collection('stats')
-      .doc(difficulty);
-  final guessStatsRef = FirebaseFirestore.instance
-      .collection('users')
-      .doc(currentUser!.uid)
-      .collection('guessStats')
-      .doc(difficulty)
-      .collection('games')
-      .doc();
+    final duration = _stopwatch.elapsed.inSeconds; // Get the elapsed time
+    final difficulty = 'easy'; // Replace with current difficulty
+    final statsRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser!.uid)
+        .collection('stats')
+        .doc(difficulty);
+    final guessStatsRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser!.uid)
+        .collection('guessStats')
+        .doc(difficulty)
+        .collection('games')
+        .doc();
 
-  await FirebaseFirestore.instance.runTransaction((transaction) async {
-    final statsDoc = await transaction.get(statsRef);
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final statsDoc = await transaction.get(statsRef);
 
-    if (!statsDoc.exists) {
-      transaction.set(statsRef, {
-        'matchesPlayed': 1,
-        'wins': hasWon ? 1 : 0,
-        'winStreak': hasWon ? 1 : 0,
-        'highestWinStreak': hasWon ? 1 : 0,
-      });
-    } else {
-      final data = statsDoc.data()!;
-      final matchesPlayed = data['matchesPlayed'] + 1;
-      final wins = data['wins'] + (hasWon ? 1 : 0);
-      final winStreak = hasWon ? data['winStreak'] + 1 : 0;
-      final highestWinStreak = hasWon && winStreak > data['highestWinStreak']
-          ? winStreak
-          : data['highestWinStreak'];
+      if (!statsDoc.exists) {
+        transaction.set(statsRef, {
+          'matchesPlayed': 1,
+          'wins': hasWon ? 1 : 0,
+          'winStreak': hasWon ? 1 : 0,
+          'highestWinStreak': hasWon ? 1 : 0,
+        });
+      } else {
+        final data = statsDoc.data()!;
+        final matchesPlayed = data['matchesPlayed'] + 1;
+        final wins = data['wins'] + (hasWon ? 1 : 0);
+        final winStreak = hasWon ? data['winStreak'] + 1 : 0;
+        final highestWinStreak = hasWon && winStreak > data['highestWinStreak']
+            ? winStreak
+            : data['highestWinStreak'];
 
-      transaction.update(statsRef, {
-        'matchesPlayed': matchesPlayed,
-        'wins': wins,
-        'winStreak': winStreak,
-        'highestWinStreak': highestWinStreak,
-      });
-
-      // Update the local state to reflect new stats
-      setState(() {
-        userStats = {
+        transaction.update(statsRef, {
           'matchesPlayed': matchesPlayed,
-          'winPercentage': (wins / matchesPlayed) * 100,
+          'wins': wins,
           'winStreak': winStreak,
           'highestWinStreak': highestWinStreak,
-        };
+        });
+
+        // Update the local state to reflect new stats
+        setState(() {
+          userStats = {
+            'matchesPlayed': matchesPlayed,
+            'winPercentage': (wins / matchesPlayed) * 100,
+            'winStreak': winStreak,
+            'highestWinStreak': highestWinStreak,
+          };
+        });
+      }
+
+      // Save guess stats
+      transaction.set(guessStatsRef, {
+        'attempts': attempts,
+        'duration': duration, // Save the duration
+        'status': hasWon ? 'WIN' : 'LOSE', // Save the game result
+        'targetWord': targetWord, // Save the target word
+        'timestamp': FieldValue.serverTimestamp(),
       });
-    }
-
-    // Calculate playtime duration
-    final playDuration = DateTime.now().difference(_gameStartTime!).inSeconds;
-
-    // Save guess stats with playtime and status
-    transaction.set(guessStatsRef, {
-      'attempts': attempts,
-      'timestamp': FieldValue.serverTimestamp(),
-      'duration': playDuration,
-      'status': hasWon ? 'WIN' : 'LOSE',
     });
-  });
-}
-
+  }
 
   void handleReset() {
     setState(() {
@@ -342,6 +341,7 @@ class _GameEasyState extends State<GameEasy>
       gridColors = List.generate(30, (index) => Colors.red);
       currentRow = 0;
       attempts = 0;
+      _stopwatch.reset(); // Reset the stopwatch when the game is reset
     });
   }
 
@@ -416,6 +416,7 @@ class _GameEasyState extends State<GameEasy>
   @override
   void dispose() {
     _animationController.dispose();
+    _stopwatch.stop();
     super.dispose();
   }
 
