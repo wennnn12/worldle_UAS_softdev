@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'leaderboard.dart';
 import 'result_dialog.dart';
 import 'login.dart'; // Import the login.dart file
 import 'setting.dart'; // Add this import
@@ -413,25 +414,34 @@ class _GameMediumState extends State<GameMedium>
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.leaderboard,
-                  size: 28,
+              padding: const EdgeInsets.only(right: 8.0),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => Leaderboard(),
+                    ),
+                  );
+                },
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.leaderboard,
+                      size: 28,
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      username ?? 'Username',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(height: 4),
-                Text(
-                  username ?? 'Username',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
+              )),
         ],
       ),
       body: Stack(
