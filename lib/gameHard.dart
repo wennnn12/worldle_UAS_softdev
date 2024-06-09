@@ -322,6 +322,7 @@ class _GameHardState extends State<GameHard>
           'timestamp': FieldValue.serverTimestamp(),
           'duration': playDuration,
           'status': hasWon ? 'WIN' : 'LOSE',
+          'targetWord': targetWord, // Include target word
         });
       }
     });
