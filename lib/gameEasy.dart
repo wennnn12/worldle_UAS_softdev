@@ -439,7 +439,18 @@ class _GameEasyState extends State<GameEasy>
                   ],
                 ),
                 SizedBox(height: 5),
-                Text("G is in the word and in the correct spot."),
+                  Text.rich(
+                  TextSpan(
+                    text: "G",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: " is in the word and in the correct spot.",
+                        style: TextStyle(fontWeight: FontWeight.normal),
+                      ),
+                    ],
+                  ),
+                ),
                 SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -452,7 +463,18 @@ class _GameEasyState extends State<GameEasy>
                   ],
                 ),
                 SizedBox(height: 5),
-                Text("T is in the word but in the wrong spot."),
+                  Text.rich(
+                  TextSpan(
+                    text: "T",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: " is in the word but in the wrong spot.",
+                        style: TextStyle(fontWeight: FontWeight.normal),
+                      ),
+                    ],
+                  ),
+                ),
                 SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -465,7 +487,18 @@ class _GameEasyState extends State<GameEasy>
                   ],
                 ),
                 SizedBox(height: 5),
-                Text("A is not in the word in any spot."),
+                Text.rich(
+                  TextSpan(
+                    text: "A",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: " is not in the word in any spot.",
+                        style: TextStyle(fontWeight: FontWeight.normal),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
