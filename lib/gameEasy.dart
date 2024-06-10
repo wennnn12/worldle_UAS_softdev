@@ -413,6 +413,93 @@ class _GameEasyState extends State<GameEasy>
     );
   }
 
+  void _showLearnPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("How to Play"),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                Text("Guess the hidden word in 4/5/6 tries"),
+                SizedBox(height: 10),
+                Text("Guess must be a valid 5 letter word"),
+                SizedBox(height: 10),
+                Text("After submission, tiles will change color as shown below"),
+                SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildTile('G', Colors.green),
+                    _buildTile('H', Colors.orange),
+                    _buildTile('O', Colors.orange),
+                    _buildTile('S', Colors.orange),
+                    _buildTile('T', Colors.orange),
+                  ],
+                ),
+                SizedBox(height: 5),
+                Text("G is in the word and in the correct spot."),
+                SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildTile('S', Colors.orange),
+                    _buildTile('T', Colors.yellow),
+                    _buildTile('A', Colors.orange),
+                    _buildTile('I', Colors.orange),
+                    _buildTile('N', Colors.orange),
+                  ],
+                ),
+                SizedBox(height: 5),
+                Text("T is in the word but in the wrong spot."),
+                SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildTile('P', Colors.orange),
+                    _buildTile('L', Colors.orange),
+                    _buildTile('A', Colors.grey),
+                    _buildTile('Y', Colors.orange),
+                    _buildTile('S', Colors.orange),
+                  ],
+                ),
+                SizedBox(height: 5),
+                Text("A is not in the word in any spot."),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: Text("Close"),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildTile(String letter, Color color) {
+    return Container(
+      width: 40,
+      height: 40,
+      margin: EdgeInsets.symmetric(horizontal: 2),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Center(
+        child: Text(
+          letter,
+          style: TextStyle(color: Colors.white, fontSize: 24),
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _animationController.dispose();
@@ -547,6 +634,7 @@ class _GameEasyState extends State<GameEasy>
                         onTap: () {
                           // Handle Learn tap
                           toggleDrawer();
+                          _showLearnPopup(context);
                         },
                       ),
                       ListTile(
