@@ -16,44 +16,52 @@ class ManageAccountPage extends StatelessWidget {
         stream: FirebaseFirestore.instance.collection('users').snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return CircularProgressIndicator();
+            return Center(child: CircularProgressIndicator());
           }
           List<DocumentSnapshot> users = snapshot.data!.docs;
 
-          List<DataRow> rows = users.map<DataRow>((user) {
-            var userData = user.data() as Map<String, dynamic>;
-            String username = userData['username'] ?? ''; // Check for null value
-            bool isAdmin = userData['isAdmin'] ?? false;
+          int nonAdminIndex = 0; // Counter for non-admin accounts
 
-            if (!isAdmin) {
-              return DataRow(cells: [
-                DataCell(Text('${users.indexOf(user) + 1}')),
-                DataCell(Text(username)),
-                DataCell(
-                  ElevatedButton(
-                    onPressed: () {
-                      // Move the account to deleted_accounts collection
-                      Map<String, dynamic> deletedData = {
-                        'username': username,
-                        'deletedAt': DateTime.now(),
-                      };
-                      FirebaseFirestore.instance.collection('deleted_accounts').add(deletedData);
-                      // Delete the account from users collection
-                      FirebaseFirestore.instance.collection('users').doc(user.id).delete();
-                    },
-                    child: Text('Delete'),
-                  ),
-                ),
-              ]);
-            } else {
-              // Return an empty row for admin accounts
-              return DataRow(cells: [
-                DataCell(Text('')),
-                DataCell(Text('')),
-                DataCell(Text('')),
-              ]);
-            }
-          }).toList();
+          List<DataRow> rows = users
+              .map<DataRow?>((user) {
+                var userData = user.data() as Map<String, dynamic>;
+                String username =
+                    userData['username'] ?? ''; // Check for null value
+                bool isAdmin = userData['isAdmin'] ?? false;
+
+                if (!isAdmin) {
+                  nonAdminIndex++; // Increment for non-admin account
+                  return DataRow(cells: [
+                    DataCell(Text('$nonAdminIndex')),
+                    DataCell(Text(username)),
+                    DataCell(
+                      ElevatedButton(
+                        onPressed: () {
+                          // Move the account to deleted_accounts collection
+                          Map<String, dynamic> deletedData = {
+                            'username': username,
+                            'deletedAt': DateTime.now(),
+                          };
+                          FirebaseFirestore.instance
+                              .collection('deleted_accounts')
+                              .add(deletedData);
+                          // Delete the account from users collection
+                          FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(user.id)
+                              .delete();
+                        },
+                        child: Text('Delete'),
+                      ),
+                    ),
+                  ]);
+                } else {
+                  return null;
+                }
+              })
+              .where((element) => element != null)
+              .toList()
+              .cast<DataRow>();
 
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
