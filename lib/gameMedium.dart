@@ -769,90 +769,61 @@ class Keyboard extends StatelessWidget {
   final Function() onDeletePressed;
   final Map<String, Color> keyboardColors;
 
-  const Keyboard(
-      {required this.onKeyPressed,
-      required this.onDeletePressed,
-      required this.keyboardColors,
-      Key? key})
-      : super(key: key);
+  const Keyboard({
+    required this.onKeyPressed,
+    required this.onDeletePressed,
+    required this.keyboardColors,
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final List<String> keys = [
-      'Q',
-      'W',
-      'E',
-      'R',
-      'T',
-      'Y',
-      'U',
-      'I',
-      'O',
-      'P',
-      'A',
-      'S',
-      'D',
-      'F',
-      'G',
-      'H',
-      'J',
-      'K',
-      'L',
-      'Z',
-      'X',
-      'C',
-      'V',
-      'B',
-      'N',
-      'M'
+    final List<List<String>> keys = [
+      ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+      ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+      ['Z', 'X', 'C', 'V', 'B', 'N', 'M', '⌫']
     ];
 
+    final double keyWidth = MediaQuery.of(context).size.width / 10 - 8;
+    final double keyHeight = 40;
+
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Expanded(
-          flex: 4,
-          child: GridView.builder(
-            physics: NeverScrollableScrollPhysics(),
-            padding: EdgeInsets.all(10),
-            itemCount: keys.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 10,
-              mainAxisSpacing: 4,
-              crossAxisSpacing: 4,
-            ),
-            itemBuilder: (context, index) {
-              final letter = keys[index];
+        for (var row in keys) ...[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: row.map((letter) {
               final keyColor = keyboardColors[letter] ?? Colors.blueGrey;
 
               return GestureDetector(
                 onTap: () {
-                  onKeyPressed(keys[index]);
+                  if (letter == '⌫') {
+                    onDeletePressed();
+                  } else {
+                    onKeyPressed(letter);
+                  }
                 },
                 child: Container(
+                  margin: EdgeInsets.all(2),
+                  width: letter == '⌫' ? keyWidth * 1.5 : keyWidth,
+                  height: keyHeight,
                   decoration: BoxDecoration(
                     color: keyColor,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Center(
                     child: Text(
-                      keys[index],
+                      letter,
                       style: TextStyle(color: Colors.white, fontSize: 18),
                     ),
                   ),
                 ),
               );
-            },
+            }).toList(),
           ),
-        ),
-        Expanded(
-          flex: 1,
-          child: Center(
-            child: ElevatedButton(
-              onPressed: onDeletePressed,
-              child: Text('Delete', style: TextStyle(fontSize: 18)),
-            ),
-          ),
-        ),
+          SizedBox(height: 8), // Adjust this value to control the vertical space between rows
+        ],
       ],
     );
   }
