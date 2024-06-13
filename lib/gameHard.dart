@@ -43,11 +43,13 @@ class _GameHardState extends State<GameHard>
   int _difficultyLevel = 0; // Default to easy mode
   bool _isDarkMode = false; // Default to light mode
   bool _isGameStarted = false;
-  DateTime? _gameStartTime;
+  late Stopwatch _stopwatch; // Add a stopwatch to track game duration
 
   @override
   void initState() {
     super.initState();
+    _stopwatch = Stopwatch(); // Initialize the stopwatch
+    _stopwatch.start(); // Start the stopwatch as soon as the game screen loads
     _fetchRandomWord().then((newWord) {
       setState(() {
         targetWord = newWord;
@@ -146,10 +148,6 @@ class _GameHardState extends State<GameHard>
     setState(() {
       _isGameStarted = true;
       widget.onGameStarted(true);
-      if (_gameStartTime == null) {
-        _gameStartTime =
-            DateTime.now(); // Set the start time when the game starts
-      }
     });
 
     int startIndex = currentRow * 5;
@@ -206,9 +204,11 @@ class _GameHardState extends State<GameHard>
       }
 
       if (hasWon) {
+        _stopwatch.stop(); // Stop the stopwatch if the user wins
         await _updateStats(true);
         _showResultDialog(true);
       } else if (currentRow >= 3) {
+        _stopwatch.stop(); // Stop the stopwatch if the user loses
         await _updateStats(false);
         _showResultDialog(false);
       } else {
@@ -275,6 +275,7 @@ class _GameHardState extends State<GameHard>
   Future<void> _updateStats(bool hasWon) async {
     if (isGuest) return;
 
+    final duration = _stopwatch.elapsed.inSeconds; // Get the elapsed time
     final difficulty = 'hard'; // Replace with current difficulty
     final statsRef = FirebaseFirestore.instance
         .collection('users')
@@ -325,14 +326,14 @@ class _GameHardState extends State<GameHard>
           };
         });
       }
-      final playDuration = DateTime.now().difference(_gameStartTime!).inSeconds;
 
+      // Save guess stats
       transaction.set(guessStatsRef, {
         'attempts': attempts,
+        'duration': duration, // Save the duration
+        'status': hasWon ? 'WIN' : 'LOSE', // Save the game result
+        'targetWord': targetWord, // Save the target word
         'timestamp': FieldValue.serverTimestamp(),
-        'duration': playDuration,
-        'status': hasWon ? 'WIN' : 'LOSE',
-        'targetWord': targetWord, // Include target word
       });
     });
   }
@@ -346,6 +347,8 @@ class _GameHardState extends State<GameHard>
       keyboardColors.clear();
       currentRow = 0;
       attempts = 0;
+      _stopwatch.reset(); // Reset the stopwatch when the game is reset
+      _stopwatch.start(); // Restart the stopwatch when the game is reset
     });
   }
 
@@ -416,6 +419,7 @@ class _GameHardState extends State<GameHard>
       },
     );
   }
+
   void _showLearnPopup(BuildContext context) {
     showDialog(
       context: context,
@@ -442,7 +446,18 @@ class _GameHardState extends State<GameHard>
                   ],
                 ),
                 SizedBox(height: 5),
-                Text("G is in the word and in the correct spot."),
+                Text.rich(
+                  TextSpan(
+                    text: "G",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: " is in the word and in the correct spot.",
+                        style: TextStyle(fontWeight: FontWeight.normal),
+                      ),
+                    ],
+                  ),
+                ),
                 SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -455,7 +470,18 @@ class _GameHardState extends State<GameHard>
                   ],
                 ),
                 SizedBox(height: 5),
-                Text("T is in the word but in the wrong spot."),
+                Text.rich(
+                  TextSpan(
+                    text: "T",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: " is in the word but in the wrong spot.",
+                        style: TextStyle(fontWeight: FontWeight.normal),
+                      ),
+                    ],
+                  ),
+                ),
                 SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -468,7 +494,18 @@ class _GameHardState extends State<GameHard>
                   ],
                 ),
                 SizedBox(height: 5),
-                Text("A is not in the word in any spot."),
+                Text.rich(
+                  TextSpan(
+                    text: "A",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: " is not in the word in any spot.",
+                        style: TextStyle(fontWeight: FontWeight.normal),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -506,6 +543,7 @@ class _GameHardState extends State<GameHard>
   @override
   void dispose() {
     _animationController.dispose();
+    _stopwatch.stop(); // Stop the stopwatch when the widget is disposed
     super.dispose();
   }
 
@@ -552,7 +590,7 @@ class _GameHardState extends State<GameHard>
                 ],
               ),
             ),
-          )
+          ),
         ],
       ),
       body: Stack(
@@ -635,6 +673,7 @@ class _GameHardState extends State<GameHard>
                                 color:
                                     _isDarkMode ? Colors.white : Colors.black)),
                         onTap: () {
+                          // Handle Learn tap
                           toggleDrawer();
                           _showLearnPopup(context);
                         },
@@ -706,10 +745,12 @@ class _GameHardState extends State<GameHard>
                           },
                           child: Text(user == null ? 'Login' : 'Logout'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                user == null ? Colors.white : Colors.red,
-                            foregroundColor:
-                                user == null ? Colors.black : Colors.white,
+                            backgroundColor: user == null
+                                ? Colors.white
+                                : Colors.red, // Background color
+                            foregroundColor: user == null
+                                ? Colors.black
+                                : Colors.white, // Text color
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(30),
                             ),

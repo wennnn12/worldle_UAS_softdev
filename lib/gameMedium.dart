@@ -43,11 +43,13 @@ class _GameMediumState extends State<GameMedium>
   int _difficultyLevel = 0;
   bool _isDarkMode = false;
   bool _isGameStarted = false;
-  DateTime? _gameStartTime;
+  late Stopwatch _stopwatch; // Add a stopwatch to track game duration
 
   @override
   void initState() {
     super.initState();
+    _stopwatch = Stopwatch(); // Initialize the stopwatch
+    _stopwatch.start(); // Start the stopwatch as soon as the game screen loads
     _fetchRandomWord().then((newWord) {
       setState(() {
         targetWord = newWord;
@@ -145,10 +147,6 @@ class _GameMediumState extends State<GameMedium>
     setState(() {
       _isGameStarted = true;
       widget.onGameStarted(true);
-      if (_gameStartTime == null) {
-        _gameStartTime =
-            DateTime.now(); // Set the start time when the game starts
-      }
     });
 
     int startIndex = currentRow * 5;
@@ -197,8 +195,7 @@ class _GameMediumState extends State<GameMedium>
           if (keyboardColors[gridContent[startIndex + i]] != Colors.green) {
             keyboardColors[gridContent[startIndex + i]] = Colors.yellow;
           }
-          targetLetterCounts[gridContent[startIndex + i]] =
-              targetLetterCounts[gridContent[startIndex + i]]! - 1;
+          targetLetterCounts[gridContent[startIndex + i]]! - 1;
         } else if (gridColors[startIndex + i] == Colors.grey &&
             !keyboardColors.containsKey(gridContent[startIndex + i])) {
           keyboardColors[gridContent[startIndex + i]] = Colors.grey;
@@ -206,9 +203,11 @@ class _GameMediumState extends State<GameMedium>
       }
 
       if (hasWon) {
+        _stopwatch.stop(); // Stop the stopwatch if the user wins
         await _updateStats(true);
         _showResultDialog(true);
       } else if (currentRow >= 4) {
+        _stopwatch.stop(); // Stop the stopwatch if the user loses
         await _updateStats(false);
         _showResultDialog(false);
       } else {
@@ -275,6 +274,7 @@ class _GameMediumState extends State<GameMedium>
   Future<void> _updateStats(bool hasWon) async {
     if (isGuest) return;
 
+    final duration = _stopwatch.elapsed.inSeconds; // Get the elapsed time
     final difficulty = 'medium'; // Replace with current difficulty
     final statsRef = FirebaseFirestore.instance
         .collection('users')
@@ -324,14 +324,14 @@ class _GameMediumState extends State<GameMedium>
           };
         });
       }
-      final playDuration = DateTime.now().difference(_gameStartTime!).inSeconds;
 
+      // Save guess stats
       transaction.set(guessStatsRef, {
         'attempts': attempts,
+        'duration': duration, // Save the duration
+        'status': hasWon ? 'WIN' : 'LOSE', // Save the game result
+        'targetWord': targetWord, // Save the target word
         'timestamp': FieldValue.serverTimestamp(),
-        'duration': playDuration,
-        'status': hasWon ? 'WIN' : 'LOSE',
-        'targetWord': targetWord, // Include target word
       });
     });
   }
@@ -346,6 +346,7 @@ class _GameMediumState extends State<GameMedium>
       keyboardColors.clear();
       currentRow = 0;
       attempts = 0;
+      _stopwatch.reset(); // Reset the stopwatch when the game is reset
     });
   }
 
@@ -506,6 +507,7 @@ class _GameMediumState extends State<GameMedium>
   @override
   void dispose() {
     _animationController.dispose();
+    _stopwatch.stop();
     super.dispose();
   }
 
@@ -765,12 +767,12 @@ class Grid extends StatelessWidget {
 class Keyboard extends StatelessWidget {
   final Function(String) onKeyPressed;
   final Function() onDeletePressed;
-  final Map<String, Color> keyboardColors; // Add keyboardColors parameter
+  final Map<String, Color> keyboardColors;
 
   const Keyboard(
       {required this.onKeyPressed,
       required this.onDeletePressed,
-      required this.keyboardColors, // Initialize keyboardColors
+      required this.keyboardColors,
       Key? key})
       : super(key: key);
 

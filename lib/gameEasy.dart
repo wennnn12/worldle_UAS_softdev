@@ -49,6 +49,7 @@ class _GameEasyState extends State<GameEasy>
   void initState() {
     super.initState();
     _stopwatch = Stopwatch(); // Initialize the stopwatch
+    _stopwatch.start(); // Start the stopwatch as soon as the game screen loads
     _fetchRandomWord().then((newWord) {
       setState(() {
         targetWord = newWord;
@@ -144,10 +145,6 @@ class _GameEasyState extends State<GameEasy>
   }
 
   Future<void> handleSubmit() async {
-    if (!_stopwatch.isRunning) {
-      _stopwatch.start(); // Start the stopwatch when the game starts
-    }
-
     setState(() {
       _isGameStarted = true;
       widget.onGameStarted(true);

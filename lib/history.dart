@@ -48,13 +48,12 @@ class _HistoryPageState extends State<HistoryPage> {
         }
         allHistoryData.add({
           'date': date,
-          'status': gameData['status'] ??
-              'N/A', // Update this field if status data is available
+          'status': gameData['status'] ?? 'N/A',
           'guesses': gameData['attempts'] ?? 0,
+          'duration': gameData['duration'] ?? 0,
           'difficulty': difficulty,
-          'timestamp': dateTime, // Add DateTime for sorting
-          'targetWord':
-              gameData['targetWord'] ?? 'N/A', // Fetch the target word
+          'timestamp': dateTime,
+          'targetWord': gameData['targetWord'] ?? 'N/A',
         });
       }
     }
@@ -105,9 +104,8 @@ class _HistoryPageState extends State<HistoryPage> {
                     status: data['status'] ?? 'N/A',
                     guesses: data['guesses'] ?? 0,
                     duration: data['duration'] ?? 0,
-                    difficulty: data['difficulty'] ?? 'N/A',
-                    targetWord:
-                        data['targetWord'] ?? 'N/A', // Pass the target word
+                    difficulty: data['difficulty']?.toUpperCase() ?? 'N/A',
+                    targetWord: data['targetWord'] ?? 'N/A',
                   );
                 },
               ),
@@ -185,7 +183,7 @@ class HistoryCard extends StatelessWidget {
           children: [
             Container(
               width: 40,
-              height: 110, // Ensuring the numbering area is a consistent height
+              height: 110,
               color: status == 'WIN' ? Colors.green[200] : Colors.red[200],
               child: Center(
                 child: Text(
@@ -280,7 +278,7 @@ class HistoryCard extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          difficulty,
+                          difficulty.toUpperCase(),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
