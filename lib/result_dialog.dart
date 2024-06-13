@@ -53,7 +53,7 @@ class ResultDialog extends StatelessWidget {
                       )
                     : Text('No statistics available'),
                 SizedBox(height: 20),
-                Text('GUESSES'),
+                Text('GUESS DISTRIBUTION'),
                 GuessStatsBarChart(guessStats: guessStats, barsCount: barsCount),
               ],
             ),

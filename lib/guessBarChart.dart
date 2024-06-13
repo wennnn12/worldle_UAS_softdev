@@ -12,6 +12,14 @@ class GuessStatsBarChart extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: List.generate(barsCount, (index) {
         int count = guessStats[index + 1] ?? 0;
+        double maxWidth = MediaQuery.of(context).size.width - 40; // Adjust width as needed
+        double barWidth = (count / (guessStats.values.isEmpty ? 1 : guessStats.values.reduce((a, b) => a > b ? a : b))) * maxWidth;
+
+        // Ensure a minimal width for bars with count 0
+        if (barWidth == 0) {
+          barWidth = 20; // Minimal width for count 0
+        }
+
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 4.0),
           child: Row(
@@ -23,20 +31,16 @@ class GuessStatsBarChart extends StatelessWidget {
                   children: [
                     Container(
                       height: 20,
-                      color: Colors.grey[300],
-                    ),
-                    Container(
-                      height: 20,
-                      width: (count / (guessStats.values.isEmpty ? 1 : guessStats.values.reduce((a, b) => a > b ? a : b))) * MediaQuery.of(context).size.width,
+                      width: barWidth,
                       color: Colors.green[300],
-                    ),
-                    Positioned.fill(
-                      child: Center(
-                        child: Text('$count', style: TextStyle(color: Colors.white)),
-                      ),
                     ),
                   ],
                 ),
+              ),
+              SizedBox(width: 8),
+              Text(
+                '$count',
+                style: TextStyle(color: Colors.white),
               ),
             ],
           ),
