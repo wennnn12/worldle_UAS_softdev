@@ -33,86 +33,90 @@ class MainMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Main Menu'),
-        centerTitle: true,
-        elevation: 0,
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () async {
-                String difficulty = 'easy'; // Default to easy mode
-                User? user = FirebaseAuth.instance.currentUser;
-                if (user != null) {
-                  // Fetch user-specific difficulty
-                  var userData = await FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(user.uid)
-                      .get();
-                  try {
-                    difficulty = userData.get('difficultyLevel') == 1
-                        ? 'medium'
-                        : userData.get('difficultyLevel') == 2
-                            ? 'hard'
-                            : 'easy';
-                    bool isDarkMode = userData.get('isDarkMode') ?? false;
-                    toggleTheme(isDarkMode); // Apply user-specific theme
-                  } catch (e) {
-                    // Field doesn't exist, keep default value
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Main Menu'),
+          centerTitle: true,
+          elevation: 0,
+          automaticallyImplyLeading: false, // Remove the back button
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () async {
+                  String difficulty = 'easy'; // Default to easy mode
+                  User? user = FirebaseAuth.instance.currentUser;
+                  if (user != null) {
+                    // Fetch user-specific difficulty
+                    var userData = await FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(user.uid)
+                        .get();
+                    try {
+                      difficulty = userData.get('difficultyLevel') == 1
+                          ? 'medium'
+                          : userData.get('difficultyLevel') == 2
+                              ? 'hard'
+                              : 'easy';
+                      bool isDarkMode = userData.get('isDarkMode') ?? false;
+                      toggleTheme(isDarkMode); // Apply user-specific theme
+                    } catch (e) {
+                      // Field doesn't exist, keep default value
+                    }
                   }
-                }
-                String randomWord = await _fetchRandomWord(difficulty);
-                if (difficulty == 'easy') {
+                  String randomWord = await _fetchRandomWord(difficulty);
+                  if (difficulty == 'easy') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => GameEasy(
+                              initialTargetWord: randomWord,
+                              toggleTheme: toggleTheme,
+                              onGameStarted: setGameStarted)),
+                    );
+                  } else if (difficulty == 'medium') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => GameMedium(
+                              initialTargetWord: randomWord,
+                              toggleTheme: toggleTheme,
+                              onGameStarted: setGameStarted)),
+                    );
+                  } else if (difficulty == 'hard') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => GameHard(
+                              initialTargetWord: randomWord,
+                              toggleTheme: toggleTheme,
+                              onGameStarted: setGameStarted)),
+                    );
+                  }
+                },
+                child: Text('Play'),
+              ),
+              SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => GameEasy(
-                            initialTargetWord: randomWord,
+                        builder: (context) => LoginPage(
                             toggleTheme: toggleTheme,
-                            onGameStarted: setGameStarted)),
+                            setGameStarted: setGameStarted,
+                            isGameStarted: isGameStarted)),
                   );
-                } else if (difficulty == 'medium') {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => GameMedium(
-                            initialTargetWord: randomWord,
-                            toggleTheme: toggleTheme,
-                            onGameStarted: setGameStarted)),
-                  );
-                } else if (difficulty == 'hard') {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => GameHard(
-                            initialTargetWord: randomWord,
-                            toggleTheme: toggleTheme,
-                            onGameStarted: setGameStarted)),
-                  );
-                }
-              },
-              child: Text('Play'),
-            ),
-            SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => LoginPage(
-                          toggleTheme: toggleTheme,
-                          setGameStarted: setGameStarted,
-                          isGameStarted: isGameStarted)),
-                );
-              },
-              child: Text('Login'),
-            ),
-          ],
+                },
+                child: Text('Login'),
+              ),
+            ],
+          ),
         ),
       ),
     );

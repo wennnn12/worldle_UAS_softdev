@@ -26,7 +26,7 @@ class _GameHardState extends State<GameHard>
     with SingleTickerProviderStateMixin {
   late String targetWord;
   List<String> gridContent = List.generate(20, (index) => '');
-  List<Color> gridColors = List.generate(20, (index) => Colors.red);
+  List<Color> gridColors = List.generate(20, (index) => const Color.fromARGB(255, 255, 162, 155));
   Map<String, Color> keyboardColors = {};
   int currentRow = 0;
   int attempts = 0;
@@ -343,7 +343,7 @@ class _GameHardState extends State<GameHard>
       _isGameStarted = false;
       widget.onGameStarted(false);
       gridContent = List.generate(20, (index) => '');
-      gridColors = List.generate(20, (index) => Colors.red);
+      gridColors = List.generate(20, (index) => const Color.fromARGB(255, 255, 162, 155));
       keyboardColors.clear();
       currentRow = 0;
       attempts = 0;
@@ -558,7 +558,7 @@ class _GameHardState extends State<GameHard>
           title: Text('Worldle'),
           centerTitle: true,
           elevation: 0,
-          backgroundColor: _isDarkMode ? Colors.black : Colors.blue,
+          backgroundColor: _isDarkMode ? Colors.black : const Color.fromARGB(255, 91, 181, 255),
           leading: IconButton(
             icon: Icon(Icons.menu), // Hamburger icon
             onPressed: toggleDrawer,
@@ -603,7 +603,7 @@ class _GameHardState extends State<GameHard>
                 Expanded(
                   flex: 7,
                   child: Container(
-                    color: _isDarkMode ? Colors.grey[900] : Colors.yellow,
+                    color: _isDarkMode ? Colors.grey[900] : Color.fromARGB(255, 206, 251, 255),
                     child:
                         Grid(gridContent: gridContent, gridColors: gridColors),
                   ),
@@ -611,7 +611,7 @@ class _GameHardState extends State<GameHard>
                 Expanded(
                   flex: 4,
                   child: Container(
-                    color: _isDarkMode ? Colors.black : Colors.green,
+                    color: _isDarkMode ? Colors.black : const Color.fromARGB(255, 91, 181, 255),
                     child: Column(
                       children: [
                         Expanded(
@@ -722,13 +722,17 @@ class _GameHardState extends State<GameHard>
                                       : Colors.black)),
                           onTap: () {
                             toggleDrawer();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    HistoryPage(), // Ensure you have imported HistoryPage
-                              ),
-                            );
+                            if (user == null) {
+                              _showLoginPopup(context);
+                            } else {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      HistoryPage(), // Ensure you have imported HistoryPage
+                                ),
+                              );
+                            }
                           },
                         ),
                         ListTile(
