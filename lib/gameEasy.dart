@@ -553,224 +553,231 @@ class _GameEasyState extends State<GameEasy>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      appBar: AppBar(
-        title: Text('Worldle'),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: _isDarkMode ? Colors.black : Colors.blue,
-        leading: IconButton(
-          icon: Icon(Icons.menu), // Hamburger icon
-          onPressed: toggleDrawer,
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => Leaderboard(),
-                  ),
-                );
-              },
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.leaderboard,
-                    size: 28,
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    username ?? 'Username',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
+        key: _scaffoldKey,
+        appBar: AppBar(
+          title: Text('Worldle'),
+          centerTitle: true,
+          elevation: 0,
+          backgroundColor: _isDarkMode ? Colors.black : Colors.blue,
+          leading: IconButton(
+            icon: Icon(Icons.menu), // Hamburger icon
+            onPressed: toggleDrawer,
           ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              Expanded(
-                flex: 7,
-                child: Container(
-                  color: _isDarkMode ? Colors.grey[900] : Colors.yellow,
-                  child: Grid(gridContent: gridContent, gridColors: gridColors),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => Leaderboard(),
+                    ),
+                  );
+                },
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.leaderboard,
+                      size: 28,
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      username ?? 'Username',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Expanded(
-                flex: 4,
-                child: Container(
-                  color: _isDarkMode ? Colors.black : Colors.green,
-                  child: Column(
-                    children: [
-                      Expanded(
-                        flex: 4,
-                        child: Keyboard(
-                          onKeyPressed: handleKeyPress,
-                          onDeletePressed: handleDeletePress,
-                          keyboardColors:
-                              keyboardColors, // Pass keyboard colors
-                        ),
-                      ),
-                      Expanded(
-                        flex: 1,
-                        child: Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              ElevatedButton(
-                                onPressed: handleSubmit,
-                                child: Text('Submit',
-                                    style: TextStyle(fontSize: 18)),
-                              ),
-                              SizedBox(width: 20),
-                              ElevatedButton(
-                                onPressed: handleReset,
-                                child: Text('Reset',
-                                    style: TextStyle(fontSize: 18)),
-                              ),
-                            ],
+            ),
+          ],
+        ),
+        body: Stack(
+          children: [
+            Column(
+              children: [
+                Expanded(
+                  flex: 7,
+                  child: Container(
+                    color: _isDarkMode ? Colors.grey[900] : Colors.yellow,
+                    child:
+                        Grid(gridContent: gridContent, gridColors: gridColors),
+                  ),
+                ),
+                Expanded(
+                  flex: 4,
+                  child: Container(
+                    color: _isDarkMode ? Colors.black : Colors.green,
+                    child: Column(
+                      children: [
+                        Expanded(
+                          flex: 4,
+                          child: Keyboard(
+                            onKeyPressed: handleKeyPress,
+                            onDeletePressed: handleDeletePress,
+                            keyboardColors:
+                                keyboardColors, // Pass keyboard colors
                           ),
                         ),
-                      ),
-                    ],
+                        Expanded(
+                          flex: 1,
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                ElevatedButton(
+                                  onPressed: handleSubmit,
+                                  child: Text('Submit',
+                                      style: TextStyle(fontSize: 18)),
+                                ),
+                                SizedBox(width: 20),
+                                ElevatedButton(
+                                  onPressed: handleReset,
+                                  child: Text('Reset',
+                                      style: TextStyle(fontSize: 18)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-          if (_isDrawerOpen)
-            GestureDetector(
-              onTap: toggleDrawer,
-              child: Container(
-                color: Colors.black54,
-                width: MediaQuery.of(context).size.width,
-                height: MediaQuery.of(context).size.height,
-              ),
+              ],
             ),
-          SlideTransition(
-            position: _slideAnimation,
-            child: SafeArea(
-              child: Material(
-                elevation: 8,
+            if (_isDrawerOpen)
+              GestureDetector(
+                onTap: toggleDrawer,
                 child: Container(
-                  width: 240,
-                  height: 350,
-                  color: _isDarkMode ? Colors.black : Colors.white,
-                  child: Column(
-                    children: [
-                      ListTile(
-                        leading: Icon(Icons.help_outline,
-                            color: _isDarkMode ? Colors.white : Colors.black),
-                        title: Text('Learn?',
-                            style: TextStyle(
-                                color:
-                                    _isDarkMode ? Colors.white : Colors.black)),
-                        onTap: () {
-                          // Handle Learn tap
-                          toggleDrawer();
-                          _showLearnPopup(context);
-                        },
-                      ),
-                      ListTile(
-                        leading: Icon(Icons.settings,
-                            color: _isDarkMode ? Colors.white : Colors.black),
-                        title: Text('Setting',
-                            style: TextStyle(
-                                color:
-                                    _isDarkMode ? Colors.white : Colors.black)),
-                        onTap: () {
-                          toggleDrawer();
-                          if (user == null) {
-                            _showLoginPopup(context);
-                          } else {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SettingPage(
-                                  toggleTheme: widget.toggleTheme,
-                                  isGameStarted: _isGameStarted,
-                                  setGameStarted: widget.onGameStarted,
-                                  hasGuessed: currentRow >
-                                      0, // Pass true if at least one guess is made
-                                ),
-                              ),
-                            );
-                          }
-                        },
-                      ),
-                      ListTile(
-                        leading: Icon(Icons.history,
-                            color: _isDarkMode ? Colors.white : Colors.black),
-                        title: Text('History',
-                            style: TextStyle(
-                                color:
-                                    _isDarkMode ? Colors.white : Colors.black)),
-                        onTap: () {
-                          toggleDrawer();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  HistoryPage(), // Ensure you have imported HistoryPage
-                            ),
-                          );
-                        },
-                      ),
-                      ListTile(
-                        title: ElevatedButton(
-                          onPressed: () {
+                  color: Colors.black54,
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height,
+                ),
+              ),
+            SlideTransition(
+              position: _slideAnimation,
+              child: SafeArea(
+                child: Material(
+                  elevation: 8,
+                  child: Container(
+                    width: 240,
+                    height: 350,
+                    color: _isDarkMode ? Colors.black : Colors.white,
+                    child: Column(
+                      children: [
+                        ListTile(
+                          leading: Icon(Icons.help_outline,
+                              color: _isDarkMode ? Colors.white : Colors.black),
+                          title: Text('Learn?',
+                              style: TextStyle(
+                                  color: _isDarkMode
+                                      ? Colors.white
+                                      : Colors.black)),
+                          onTap: () {
+                            // Handle Learn tap
+                            toggleDrawer();
+                            _showLearnPopup(context);
+                          },
+                        ),
+                        ListTile(
+                          leading: Icon(Icons.settings,
+                              color: _isDarkMode ? Colors.white : Colors.black),
+                          title: Text('Setting',
+                              style: TextStyle(
+                                  color: _isDarkMode
+                                      ? Colors.white
+                                      : Colors.black)),
+                          onTap: () {
+                            toggleDrawer();
                             if (user == null) {
-                              toggleDrawer();
+                              _showLoginPopup(context);
+                            } else {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => LoginPage(
+                                  builder: (context) => SettingPage(
                                     toggleTheme: widget.toggleTheme,
-                                    setGameStarted: widget.onGameStarted,
                                     isGameStarted: _isGameStarted,
+                                    setGameStarted: widget.onGameStarted,
+                                    hasGuessed: currentRow >
+                                        0, // Pass true if at least one guess is made
                                   ),
                                 ),
                               );
-                            } else {
-                              _logout();
-                              toggleDrawer();
                             }
                           },
-                          child: Text(user == null ? 'Login' : 'Logout'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: user == null
-                                ? Colors.white
-                                : Colors.red, // Background color
-                            foregroundColor: user == null
-                                ? Colors.black
-                                : Colors.white, // Text color
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
+                        ),
+                        ListTile(
+                          leading: Icon(Icons.history,
+                              color: _isDarkMode ? Colors.white : Colors.black),
+                          title: Text('History',
+                              style: TextStyle(
+                                  color: _isDarkMode
+                                      ? Colors.white
+                                      : Colors.black)),
+                          onTap: () {
+                            toggleDrawer();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    HistoryPage(), // Ensure you have imported HistoryPage
+                              ),
+                            );
+                          },
+                        ),
+                        ListTile(
+                          title: ElevatedButton(
+                            onPressed: () {
+                              if (user == null) {
+                                toggleDrawer();
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => LoginPage(
+                                      toggleTheme: widget.toggleTheme,
+                                      setGameStarted: widget.onGameStarted,
+                                      isGameStarted: _isGameStarted,
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                _logout();
+                                toggleDrawer();
+                              }
+                            },
+                            child: Text(user == null ? 'Login' : 'Logout'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: user == null
+                                  ? Colors.white
+                                  : Colors.red, // Background color
+                              foregroundColor: user == null
+                                  ? Colors.black
+                                  : Colors.white, // Text color
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              elevation: 0,
+                              side: BorderSide(color: Colors.grey),
                             ),
-                            elevation: 0,
-                            side: BorderSide(color: Colors.grey),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -867,10 +874,11 @@ class Keyboard extends StatelessWidget {
               );
             }).toList(),
           ),
-          SizedBox(height: 8), // Adjust this value to control the vertical space between rows
+          SizedBox(
+              height:
+                  8), // Adjust this value to control the vertical space between rows
         ],
       ],
     );
   }
 }
-
