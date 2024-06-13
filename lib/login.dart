@@ -45,7 +45,14 @@ class LoginPage extends StatelessWidget {
       if (isAdmin) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => AdminPage()),
+          MaterialPageRoute(
+            builder: (context) => AdminPage(
+              toggleTheme: toggleTheme,
+              setGameStarted: setGameStarted,
+              isGameStarted: isGameStarted,
+              hasGuessed: false, // Adjust as necessary
+            ),
+          ),
         );
       } else {
         // Fetch user-specific settings
