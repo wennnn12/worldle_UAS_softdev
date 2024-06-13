@@ -27,6 +27,7 @@ class _GameMediumState extends State<GameMedium>
   late String targetWord;
   List<String> gridContent = List.generate(25, (index) => '');
   List<Color> gridColors = List.generate(25, (index) => Colors.red);
+  Map<String, Color> keyboardColors = {};
   int currentRow = 0;
   int attempts = 0;
   bool isGuest = true;
@@ -47,7 +48,11 @@ class _GameMediumState extends State<GameMedium>
   @override
   void initState() {
     super.initState();
-    _fetchRandomWord(); // Fetch a new random word during initialization
+    _fetchRandomWord().then((newWord) {
+      setState(() {
+        targetWord = newWord;
+      });
+    });
     _animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 250),
@@ -100,14 +105,12 @@ class _GameMediumState extends State<GameMedium>
     }
   }
 
-  Future<void> _fetchRandomWord() async {
+  Future<String> _fetchRandomWord() async {
     final wordList =
         await FirebaseFirestore.instance.collection('Wordlists').get();
     final words = wordList.docs.map((doc) => doc['word'] as String).toList();
     words.shuffle();
-    setState(() {
-      targetWord = words.isNotEmpty ? words.first : 'ERROR';
-    });
+    return words.isNotEmpty ? words.first : 'ERROR';
   }
 
   void handleKeyPress(String letter) {
@@ -176,6 +179,7 @@ class _GameMediumState extends State<GameMedium>
       for (int i = 0; i < 5; i++) {
         if (gridContent[startIndex + i] == targetWord[i]) {
           gridColors[startIndex + i] = Colors.green;
+          keyboardColors[gridContent[startIndex + i]] = Colors.green;
           targetLetterCounts[gridContent[startIndex + i]] =
               targetLetterCounts[gridContent[startIndex + i]]! - 1;
         } else {
@@ -190,8 +194,14 @@ class _GameMediumState extends State<GameMedium>
             targetLetterCounts[gridContent[startIndex + i]] != null &&
             targetLetterCounts[gridContent[startIndex + i]]! > 0) {
           gridColors[startIndex + i] = Colors.yellow;
+          if (keyboardColors[gridContent[startIndex + i]] != Colors.green) {
+            keyboardColors[gridContent[startIndex + i]] = Colors.yellow;
+          }
           targetLetterCounts[gridContent[startIndex + i]] =
               targetLetterCounts[gridContent[startIndex + i]]! - 1;
+        } else if (gridColors[startIndex + i] == Colors.grey &&
+            !keyboardColors.containsKey(gridContent[startIndex + i])) {
+          keyboardColors[gridContent[startIndex + i]] = Colors.grey;
         }
       }
 
@@ -245,7 +255,11 @@ class _GameMediumState extends State<GameMedium>
         hasWon: hasWon,
         attempts: attempts,
         onRetry: () async {
-          await _fetchRandomWord();
+          await _fetchRandomWord().then((newWord) {
+            setState(() {
+              targetWord = newWord;
+            });
+          });
           handleReset();
         },
         stats: isGuest
@@ -312,15 +326,13 @@ class _GameMediumState extends State<GameMedium>
       }
       final playDuration = DateTime.now().difference(_gameStartTime!).inSeconds;
 
-      if (hasWon) {
-        transaction.set(guessStatsRef, {
-          'attempts': attempts,
-          'timestamp': FieldValue.serverTimestamp(),
-          'duration': playDuration,
-          'status': hasWon ? 'WIN' : 'LOSE',
-          'targetWord': targetWord, // Include target word
-        });
-      }
+      transaction.set(guessStatsRef, {
+        'attempts': attempts,
+        'timestamp': FieldValue.serverTimestamp(),
+        'duration': playDuration,
+        'status': hasWon ? 'WIN' : 'LOSE',
+        'targetWord': targetWord, // Include target word
+      });
     });
   }
 
@@ -331,6 +343,7 @@ class _GameMediumState extends State<GameMedium>
       widget.onGameStarted(false);
       gridContent = List.generate(25, (index) => '');
       gridColors = List.generate(25, (index) => Colors.red);
+      keyboardColors.clear();
       currentRow = 0;
       attempts = 0;
     });
@@ -402,6 +415,7 @@ class _GameMediumState extends State<GameMedium>
       },
     );
   }
+
   void _showLearnPopup(BuildContext context) {
     showDialog(
       context: context,
@@ -562,6 +576,7 @@ class _GameMediumState extends State<GameMedium>
                         child: Keyboard(
                           onKeyPressed: handleKeyPress,
                           onDeletePressed: handleDeletePress,
+                          keyboardColors: keyboardColors, // Pass keyboard colors
                         ),
                       ),
                       Expanded(
@@ -750,9 +765,13 @@ class Grid extends StatelessWidget {
 class Keyboard extends StatelessWidget {
   final Function(String) onKeyPressed;
   final Function() onDeletePressed;
+  final Map<String, Color> keyboardColors; // Add keyboardColors parameter
 
   const Keyboard(
-      {required this.onKeyPressed, required this.onDeletePressed, Key? key})
+      {required this.onKeyPressed,
+      required this.onDeletePressed,
+      required this.keyboardColors, // Initialize keyboardColors
+      Key? key})
       : super(key: key);
 
   @override
@@ -800,13 +819,16 @@ class Keyboard extends StatelessWidget {
               crossAxisSpacing: 4,
             ),
             itemBuilder: (context, index) {
+              final letter = keys[index];
+              final keyColor = keyboardColors[letter] ?? Colors.blueGrey;
+
               return GestureDetector(
                 onTap: () {
                   onKeyPressed(keys[index]);
                 },
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.blueGrey,
+                    color: keyColor,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Center(

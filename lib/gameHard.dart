@@ -27,6 +27,7 @@ class _GameHardState extends State<GameHard>
   late String targetWord;
   List<String> gridContent = List.generate(20, (index) => '');
   List<Color> gridColors = List.generate(20, (index) => Colors.red);
+  Map<String, Color> keyboardColors = {};
   int currentRow = 0;
   int attempts = 0;
   bool isGuest = true; // Assume user is a guest by default
@@ -179,6 +180,7 @@ class _GameHardState extends State<GameHard>
       for (int i = 0; i < 5; i++) {
         if (gridContent[startIndex + i] == targetWord[i]) {
           gridColors[startIndex + i] = Colors.green;
+          keyboardColors[gridContent[startIndex + i]] = Colors.green;
           targetLetterCounts[gridContent[startIndex + i]] =
               targetLetterCounts[gridContent[startIndex + i]]! - 1;
         } else {
@@ -193,8 +195,13 @@ class _GameHardState extends State<GameHard>
             targetLetterCounts[gridContent[startIndex + i]] != null &&
             targetLetterCounts[gridContent[startIndex + i]]! > 0) {
           gridColors[startIndex + i] = Colors.yellow;
-          targetLetterCounts[gridContent[startIndex + i]] =
-              targetLetterCounts[gridContent[startIndex + i]]! - 1;
+          if (keyboardColors[gridContent[startIndex + i]] != Colors.green) {
+            keyboardColors[gridContent[startIndex + i]] = Colors.yellow;
+          }
+          targetLetterCounts[gridContent[startIndex + i]]! - 1;
+        } else if (gridColors[startIndex + i] == Colors.grey &&
+            !keyboardColors.containsKey(gridContent[startIndex + i])) {
+          keyboardColors[gridContent[startIndex + i]] = Colors.grey;
         }
       }
 
@@ -248,7 +255,11 @@ class _GameHardState extends State<GameHard>
         hasWon: hasWon,
         attempts: attempts,
         onRetry: () async {
-          await _fetchRandomWord();
+          await _fetchRandomWord().then((newWord) {
+            setState(() {
+              targetWord = newWord;
+            });
+          });
           handleReset();
         },
         stats: isGuest
@@ -316,15 +327,13 @@ class _GameHardState extends State<GameHard>
       }
       final playDuration = DateTime.now().difference(_gameStartTime!).inSeconds;
 
-      if (hasWon) {
-        transaction.set(guessStatsRef, {
-          'attempts': attempts,
-          'timestamp': FieldValue.serverTimestamp(),
-          'duration': playDuration,
-          'status': hasWon ? 'WIN' : 'LOSE',
-          'targetWord': targetWord, // Include target word
-        });
-      }
+      transaction.set(guessStatsRef, {
+        'attempts': attempts,
+        'timestamp': FieldValue.serverTimestamp(),
+        'duration': playDuration,
+        'status': hasWon ? 'WIN' : 'LOSE',
+        'targetWord': targetWord, // Include target word
+      });
     });
   }
 
@@ -334,6 +343,7 @@ class _GameHardState extends State<GameHard>
       widget.onGameStarted(false);
       gridContent = List.generate(20, (index) => '');
       gridColors = List.generate(20, (index) => Colors.red);
+      keyboardColors.clear();
       currentRow = 0;
       attempts = 0;
     });
@@ -567,6 +577,7 @@ class _GameHardState extends State<GameHard>
                         child: Keyboard(
                           onKeyPressed: handleKeyPress,
                           onDeletePressed: handleDeletePress,
+                          keyboardColors: keyboardColors, // Pass keyboard colors
                         ),
                       ),
                       Expanded(
@@ -755,9 +766,13 @@ class Grid extends StatelessWidget {
 class Keyboard extends StatelessWidget {
   final Function(String) onKeyPressed;
   final Function() onDeletePressed;
+  final Map<String, Color> keyboardColors; // Add keyboardColors parameter
 
   const Keyboard(
-      {required this.onKeyPressed, required this.onDeletePressed, Key? key})
+      {required this.onKeyPressed,
+      required this.onDeletePressed,
+      required this.keyboardColors, // Initialize keyboardColors
+      Key? key})
       : super(key: key);
 
   @override
@@ -805,13 +820,16 @@ class Keyboard extends StatelessWidget {
               crossAxisSpacing: 4,
             ),
             itemBuilder: (context, index) {
+              final letter = keys[index];
+              final keyColor = keyboardColors[letter] ?? Colors.blueGrey;
+
               return GestureDetector(
                 onTap: () {
                   onKeyPressed(keys[index]);
                 },
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.blueGrey,
+                    color: keyColor,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Center(
