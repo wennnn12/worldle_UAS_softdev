@@ -27,6 +27,7 @@ class _GameEasyState extends State<GameEasy>
   late String targetWord;
   List<String> gridContent = List.generate(30, (index) => '');
   List<Color> gridColors = List.generate(30, (index) => Colors.red);
+  Map<String, Color> keyboardColors = {};
   int currentRow = 0;
   int attempts = 0;
   bool isGuest = true; // Assume user is a guest by default
@@ -47,7 +48,12 @@ class _GameEasyState extends State<GameEasy>
   @override
   void initState() {
     super.initState();
-    targetWord = widget.initialTargetWord;
+    _stopwatch = Stopwatch(); // Initialize the stopwatch
+    _fetchRandomWord().then((newWord) {
+      setState(() {
+        targetWord = newWord;
+      });
+    });
     _animationController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 250),
@@ -55,7 +61,6 @@ class _GameEasyState extends State<GameEasy>
     _slideAnimation = Tween<Offset>(begin: Offset(-1, 0), end: Offset(0, 0))
         .animate(_animationController);
     _checkUser();
-    _stopwatch = Stopwatch(); // Initialize the stopwatch
   }
 
   Future<void> _checkUser() async {
@@ -176,6 +181,7 @@ class _GameEasyState extends State<GameEasy>
       for (int i = 0; i < 5; i++) {
         if (gridContent[startIndex + i] == targetWord[i]) {
           gridColors[startIndex + i] = Colors.green;
+          keyboardColors[gridContent[startIndex + i]] = Colors.green;
           targetLetterCounts[gridContent[startIndex + i]] =
               targetLetterCounts[gridContent[startIndex + i]]! - 1;
         } else {
@@ -190,7 +196,13 @@ class _GameEasyState extends State<GameEasy>
             targetLetterCounts[gridContent[startIndex + i]] != null &&
             targetLetterCounts[gridContent[startIndex + i]]! > 0) {
           gridColors[startIndex + i] = Colors.yellow;
+          if (keyboardColors[gridContent[startIndex + i]] != Colors.green) {
+            keyboardColors[gridContent[startIndex + i]] = Colors.yellow;
+          }
           targetLetterCounts[gridContent[startIndex + i]]! - 1;
+        } else if (gridColors[startIndex + i] == Colors.grey &&
+            !keyboardColors.containsKey(gridContent[startIndex + i])) {
+          keyboardColors[gridContent[startIndex + i]] = Colors.grey;
         }
       }
 
@@ -339,6 +351,7 @@ class _GameEasyState extends State<GameEasy>
       widget.onGameStarted(false);
       gridContent = List.generate(30, (index) => '');
       gridColors = List.generate(30, (index) => Colors.red);
+      keyboardColors.clear();
       currentRow = 0;
       attempts = 0;
       _stopwatch.reset(); // Reset the stopwatch when the game is reset
@@ -608,6 +621,7 @@ class _GameEasyState extends State<GameEasy>
                         child: Keyboard(
                           onKeyPressed: handleKeyPress,
                           onDeletePressed: handleDeletePress,
+                          keyboardColors: keyboardColors, // Pass keyboard colors
                         ),
                       ),
                       Expanded(
@@ -799,9 +813,13 @@ class Grid extends StatelessWidget {
 class Keyboard extends StatelessWidget {
   final Function(String) onKeyPressed;
   final Function() onDeletePressed;
+  final Map<String, Color> keyboardColors; // Add keyboardColors parameter
 
   const Keyboard(
-      {required this.onKeyPressed, required this.onDeletePressed, Key? key})
+      {required this.onKeyPressed,
+      required this.onDeletePressed,
+      required this.keyboardColors, // Initialize keyboardColors
+      Key? key})
       : super(key: key);
 
   @override
@@ -849,13 +867,16 @@ class Keyboard extends StatelessWidget {
               crossAxisSpacing: 4,
             ),
             itemBuilder: (context, index) {
+              final letter = keys[index];
+              final keyColor = keyboardColors[letter] ?? Colors.blueGrey;
+
               return GestureDetector(
                 onTap: () {
                   onKeyPressed(keys[index]);
                 },
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.blueGrey,
+                    color: keyColor,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Center(

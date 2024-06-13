@@ -41,7 +41,7 @@ class Leaderboard extends StatelessWidget {
       case 3:
         return Colors.redAccent;
       default:
-        return Colors.grey.shade300;
+        return Colors.grey.shade500;
     }
   }
 
