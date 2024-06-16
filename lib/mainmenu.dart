@@ -36,17 +36,17 @@ class MainMenu extends StatelessWidget {
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
-        appBar: AppBar(
-          title: Text('Main Menu'),
-          centerTitle: true,
-          elevation: 0,
-          automaticallyImplyLeading: false, // Remove the back button
-        ),
+        backgroundColor:
+            Color.fromARGB(255, 245, 245, 238), // Set the background color
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SizedBox(height: 20),
+              Image.asset(
+                'assets/logo.png',
+                height: 300.0,
+              ),
+              SizedBox(height: 100),
               ElevatedButton(
                 onPressed: () async {
                   String difficulty = 'easy'; // Default to easy mode
@@ -99,9 +99,24 @@ class MainMenu extends StatelessWidget {
                     );
                   }
                 },
-                child: Text('Play'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color.fromARGB(
+                      255, 140, 255, 186), // Set the button color to green
+                  minimumSize: Size(200, 60), // Increase the button size
+                ),
+                child: Text(
+                  'PLAY',
+                  style: TextStyle(
+                    fontFamily:
+                        'FranklinGothic-Bold', // Use Franklin Gothic font
+                    fontWeight: FontWeight.bold, // Set the font weight to bold
+                    color: const Color.fromARGB(
+                        255, 0, 45, 10), // Set the text color to dimmer green
+                    fontSize: 30, // Increase the text size
+                  ),
+                ),
               ),
-              SizedBox(height: 10),
+              SizedBox(height: 40),
               ElevatedButton(
                 onPressed: () {
                   Navigator.push(
@@ -113,7 +128,22 @@ class MainMenu extends StatelessWidget {
                             isGameStarted: isGameStarted)),
                   );
                 },
-                child: Text('Login'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color.fromARGB(
+                      255, 192, 204, 220), // Set the button color to green
+                  minimumSize: Size(100, 50), // Increase the button size
+                ),
+                child: Text(
+                  'LOGIN',
+                  style: TextStyle(
+                    fontFamily:
+                        'FranklinGothic-Bold', // Use Franklin Gothic font
+                    fontWeight: FontWeight.bold, // Set the font weight to bold
+                    color: const Color.fromARGB(
+                        255, 8,4,52), // Set the text color to dimmer green
+                    fontSize: 20, // Increase the text size
+                  ),
+                ),
               ),
             ],
           ),
