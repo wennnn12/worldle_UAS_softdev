@@ -78,9 +78,7 @@ class _HistoryPageState extends State<HistoryPage> {
         endIndex > historyData.length ? historyData.length : endIndex);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('History'),
-      ),
+      appBar: AppBar(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -88,9 +86,10 @@ class _HistoryPageState extends State<HistoryPage> {
             Text(
               'HISTORY',
               style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              fontFamily: 'FranklinGothic',
+              fontWeight: FontWeight.bold,
+              fontSize: 38,
+            ),
             ),
             SizedBox(height: 16),
             Expanded(
@@ -178,18 +177,31 @@ class HistoryCard extends StatelessWidget {
       ),
       margin: EdgeInsets.symmetric(vertical: 6.0),
       child: Container(
-        color: Colors.white,
+        decoration: BoxDecoration(
+          color: status == 'WIN'
+              ? Color.fromARGB(255, 205, 255, 225)
+              : const Color.fromARGB(255, 255, 224, 227),
+          borderRadius: BorderRadius.circular(10.0),
+        ),
         child: Row(
           children: [
             Container(
               width: 40,
               height: 110,
-              color: status == 'WIN' ? Colors.green[200] : Colors.red[200],
+              decoration: BoxDecoration(
+                color: status == 'WIN'
+                    ? Color.fromARGB(255, 140, 255, 186)
+                    : Color.fromARGB(255, 255, 182, 190),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(15.0),
+                  bottomLeft: Radius.circular(15.0),
+                ),
+              ),
               child: Center(
                 child: Text(
                   '$index',
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: 32,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
@@ -197,14 +209,22 @@ class HistoryCard extends StatelessWidget {
               ),
             ),
             VerticalDivider(
-              color: Colors.black,
+              color: Color.fromARGB(255, 0, 0, 0),
               thickness: 2,
-              width: 1,
+              width: 2,
             ),
             Expanded(
               child: Container(
                 padding: EdgeInsets.all(10.0),
-                color: status == 'WIN' ? Colors.green[100] : Colors.red[100],
+                decoration: BoxDecoration(
+                  color: status == 'WIN'
+                      ? Color.fromARGB(255, 205, 255, 225)
+                      : const Color.fromARGB(255, 255, 224, 227),
+                  borderRadius: BorderRadius.only(
+                    topRight: Radius.circular(10.0),
+                    bottomRight: Radius.circular(10.0),
+                  ),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -223,7 +243,7 @@ class HistoryCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: status == 'WIN' ? Colors.green : Colors.red,
+                            color: status == 'WIN' ? Color.fromARGB(255, 36, 36, 36) : Color.fromARGB(255, 36, 36, 36),
                           ),
                         ),
                       ],
@@ -243,6 +263,7 @@ class HistoryCard extends StatelessWidget {
                                       color: Colors.black,
                                       width: 1,
                                     ),
+                                    borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Center(
                                     child: Text(
