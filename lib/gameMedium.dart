@@ -13,10 +13,11 @@ class GameMedium extends StatefulWidget {
   final Function(bool) toggleTheme;
   final Function(bool) onGameStarted;
 
-  const GameMedium(
-      {required this.initialTargetWord,
-      required this.toggleTheme,
-      required this.onGameStarted});
+  const GameMedium({
+    required this.initialTargetWord,
+    required this.toggleTheme,
+    required this.onGameStarted,
+  });
 
   @override
   State<GameMedium> createState() => _GameMediumState();
@@ -26,7 +27,7 @@ class _GameMediumState extends State<GameMedium>
     with SingleTickerProviderStateMixin {
   late String targetWord;
   List<String> gridContent = List.generate(25, (index) => '');
-  List<Color> gridColors = List.generate(25, (index) => const Color.fromARGB(255, 255, 162, 155));
+  List<Color> gridColors = List.generate(25, (index) => const Color.fromARGB(255, 250, 250, 250));
   Map<String, Color> keyboardColors = {};
   int currentRow = 0;
   int attempts = 0;
@@ -176,8 +177,9 @@ class _GameMediumState extends State<GameMedium>
 
       for (int i = 0; i < 5; i++) {
         if (gridContent[startIndex + i] == targetWord[i]) {
-          gridColors[startIndex + i] = Colors.green;
-          keyboardColors[gridContent[startIndex + i]] = Colors.green;
+          gridColors[startIndex + i] = Color.fromARGB(255, 140, 255, 186);
+          keyboardColors[gridContent[startIndex + i]] =
+              Color.fromARGB(255, 140, 255, 186);
           targetLetterCounts[gridContent[startIndex + i]] =
               targetLetterCounts[gridContent[startIndex + i]]! - 1;
         } else {
@@ -188,12 +190,14 @@ class _GameMediumState extends State<GameMedium>
 
       // Second pass: Mark present but misplaced letters (yellow)
       for (int i = 0; i < 5; i++) {
-        if (gridColors[startIndex + i] != Colors.green &&
+        if (gridColors[startIndex + i] != Color.fromARGB(255, 140, 255, 186) &&
             targetLetterCounts[gridContent[startIndex + i]] != null &&
             targetLetterCounts[gridContent[startIndex + i]]! > 0) {
-          gridColors[startIndex + i] = Colors.yellow;
-          if (keyboardColors[gridContent[startIndex + i]] != Colors.green) {
-            keyboardColors[gridContent[startIndex + i]] = Colors.yellow;
+          gridColors[startIndex + i] = Color.fromARGB(255, 254, 255, 182);
+          if (keyboardColors[gridContent[startIndex + i]] !=
+              Color.fromARGB(255, 140, 255, 186)) {
+            keyboardColors[gridContent[startIndex + i]] =
+                Color.fromARGB(255, 254, 255, 182);
           }
           targetLetterCounts[gridContent[startIndex + i]]! - 1;
         } else if (gridColors[startIndex + i] == Colors.grey &&
@@ -342,7 +346,7 @@ class _GameMediumState extends State<GameMedium>
       _isGameStarted = false;
       widget.onGameStarted(false);
       gridContent = List.generate(25, (index) => '');
-      gridColors = List.generate(25, (index) => const Color.fromARGB(255, 255, 162, 155));
+      gridColors = List.generate(25, (index) => const Color.fromARGB(255, 250, 250, 250));
       keyboardColors.clear();
       currentRow = 0;
       attempts = 0;
@@ -422,64 +426,124 @@ class _GameMediumState extends State<GameMedium>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("How to Play"),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+          backgroundColor: Colors.white,
+          title: Text("How to Play",
+              style: TextStyle(fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
             child: Column(
               children: [
-                Text("Guess the hidden word in 4/5/6 tries"),
+                Text("Guess the word in 4/5/6 tries",
+                    style: TextStyle(fontSize: 16)),
                 SizedBox(height: 10),
-                Text("Guess must be a valid 5 letter word"),
+                Text("Guess must be a valid 5 letter word",
+                    style: TextStyle(fontSize: 16)),
                 SizedBox(height: 10),
                 Text(
-                    "After submission, tiles will change color as shown below"),
+                  "After submission, tiles will change color as shown below",
+                  style: TextStyle(fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 20),
+                Divider(),
                 SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _buildTile('G', Colors.green),
-                    _buildTile('H', Colors.orange),
-                    _buildTile('O', Colors.orange),
-                    _buildTile('S', Colors.orange),
-                    _buildTile('T', Colors.orange),
+                    _buildTile('G', Color.fromARGB(255, 140, 255, 186)),
+                    _buildTile('H', Colors.grey.shade300),
+                    _buildTile('O', Colors.grey.shade300),
+                    _buildTile('S', Colors.grey.shade300),
+                    _buildTile('T', Colors.grey.shade300),
                   ],
                 ),
                 SizedBox(height: 5),
-                Text("G is in the word and in the correct spot."),
+                Text.rich(
+                  TextSpan(
+                    text: "G",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: " is in the word and in the correct spot.",
+                        style: TextStyle(fontWeight: FontWeight.normal),
+                      ),
+                    ],
+                  ),
+                  style: TextStyle(fontSize: 16),
+                ),
                 SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _buildTile('S', Colors.orange),
-                    _buildTile('T', Colors.yellow),
-                    _buildTile('A', Colors.orange),
-                    _buildTile('I', Colors.orange),
-                    _buildTile('N', Colors.orange),
+                    _buildTile('S', Colors.grey.shade300),
+                    _buildTile('T', Color.fromARGB(255, 254, 255, 182)),
+                    _buildTile('A', Colors.grey.shade300),
+                    _buildTile('I', Colors.grey.shade300),
+                    _buildTile('N', Colors.grey.shade300),
                   ],
                 ),
                 SizedBox(height: 5),
-                Text("T is in the word but in the wrong spot."),
+                Text.rich(
+                  TextSpan(
+                    text: "T",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: " is in the word but in the wrong spot.",
+                        style: TextStyle(fontWeight: FontWeight.normal),
+                      ),
+                    ],
+                  ),
+                  style: TextStyle(fontSize: 16),
+                ),
                 SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _buildTile('P', Colors.orange),
-                    _buildTile('L', Colors.orange),
+                    _buildTile('P', Colors.grey.shade300),
+                    _buildTile('L', Colors.grey.shade300),
                     _buildTile('A', Colors.grey),
-                    _buildTile('Y', Colors.orange),
-                    _buildTile('S', Colors.orange),
+                    _buildTile('Y', Colors.grey.shade300),
+                    _buildTile('S', Colors.grey.shade300),
                   ],
                 ),
                 SizedBox(height: 5),
-                Text("A is not in the word in any spot."),
+                Text.rich(
+                  TextSpan(
+                    text: "A",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: " is not in the word in any spot.",
+                        style: TextStyle(fontWeight: FontWeight.normal),
+                      ),
+                    ],
+                  ),
+                  style: TextStyle(fontSize: 16),
+                ),
               ],
             ),
           ),
           actions: [
-            TextButton(
-              child: Text("Close"),
+            ElevatedButton(
+              child: Text(
+                "Close",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: const Color.fromARGB(255, 54, 54, 54),
+                ),
+              ),
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 255,182,190), // background (button) color
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
             ),
           ],
         );
@@ -499,7 +563,12 @@ class _GameMediumState extends State<GameMedium>
       child: Center(
         child: Text(
           letter,
-          style: TextStyle(color: Colors.white, fontSize: 24),
+          style: TextStyle(
+            color: Color.fromARGB(255, 39, 39, 39),
+            fontSize: 24,
+            fontFamily: 'FranklinGothic-Bold',
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
@@ -519,44 +588,54 @@ class _GameMediumState extends State<GameMedium>
       child: Scaffold(
         key: _scaffoldKey,
         appBar: AppBar(
-          title: Text('Worldle'),
+          title: Text(
+            'Worldle',
+            style: TextStyle(
+              fontFamily: 'Fraunces',
+              fontWeight: FontWeight.bold,
+              fontSize: 32,
+            ),
+          ),
           centerTitle: true,
           elevation: 0,
-          backgroundColor: _isDarkMode ? Colors.black : const Color.fromARGB(255, 91, 181, 255),
+          backgroundColor: _isDarkMode
+              ? Colors.black
+              : const Color.fromARGB(255, 250, 250, 250),
           leading: IconButton(
             icon: Icon(Icons.menu), // Hamburger icon
             onPressed: toggleDrawer,
           ),
           actions: [
             Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => Leaderboard(),
+              padding: const EdgeInsets.only(right: 8.0),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => Leaderboard(),
+                    ),
+                  );
+                },
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.leaderboard,
+                      size: 28,
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      username ?? 'Username',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
                       ),
-                    );
-                  },
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.leaderboard,
-                        size: 28,
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        username ?? 'Username',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                )),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
         body: Stack(
@@ -566,7 +645,9 @@ class _GameMediumState extends State<GameMedium>
                 Expanded(
                   flex: 7,
                   child: Container(
-                    color: _isDarkMode ? Colors.grey[900] : Color.fromARGB(255, 206, 251, 255),
+                    color: _isDarkMode
+                        ? Colors.grey[900]
+                        : Color.fromARGB(255, 255, 255, 255),
                     child:
                         Grid(gridContent: gridContent, gridColors: gridColors),
                   ),
@@ -574,7 +655,9 @@ class _GameMediumState extends State<GameMedium>
                 Expanded(
                   flex: 4,
                   child: Container(
-                    color: _isDarkMode ? Colors.black : const Color.fromARGB(255, 91, 181, 255),
+                    color: _isDarkMode
+                        ? Colors.black
+                        : const Color.fromARGB(255, 250, 250, 250),
                     child: Column(
                       children: [
                         Expanded(
@@ -594,14 +677,40 @@ class _GameMediumState extends State<GameMedium>
                               children: [
                                 ElevatedButton(
                                   onPressed: handleSubmit,
-                                  child: Text('Submit',
-                                      style: TextStyle(fontSize: 18)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        Color.fromARGB(255, 210, 214, 219),
+                                    minimumSize: Size(130, 40),
+                                  ),
+                                  child: Text(
+                                    'Submit',
+                                    style: TextStyle(
+                                      fontFamily: 'FranklinGothic-Bold',
+                                      fontWeight: FontWeight.bold,
+                                      color:
+                                          const Color.fromARGB(255, 39, 39, 39),
+                                      fontSize: 20,
+                                    ),
+                                  ),
                                 ),
-                                SizedBox(width: 20),
+                                SizedBox(width: 10),
                                 ElevatedButton(
                                   onPressed: handleReset,
-                                  child: Text('Reset',
-                                      style: TextStyle(fontSize: 18)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        Color.fromARGB(255, 210, 214, 219),
+                                    minimumSize: Size(130, 40),
+                                  ),
+                                  child: Text(
+                                    'Reset',
+                                    style: TextStyle(
+                                      fontFamily: 'FranklinGothic-Bold',
+                                      fontWeight: FontWeight.bold,
+                                      color:
+                                          const Color.fromARGB(255, 39, 39, 39),
+                                      fontSize: 20,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -628,7 +737,7 @@ class _GameMediumState extends State<GameMedium>
                 child: Material(
                   elevation: 8,
                   child: Container(
-                    width: 240,
+                    width: 200,
                     height: 350,
                     color: _isDarkMode ? Colors.black : Colors.white,
                     child: Column(
@@ -642,6 +751,7 @@ class _GameMediumState extends State<GameMedium>
                                       ? Colors.white
                                       : Colors.black)),
                           onTap: () {
+                            // Handle Learn tap
                             toggleDrawer();
                             _showLearnPopup(context);
                           },
@@ -697,6 +807,7 @@ class _GameMediumState extends State<GameMedium>
                             }
                           },
                         ),
+                        SizedBox(height: 80),
                         ListTile(
                           title: ElevatedButton(
                             onPressed: () {
@@ -719,10 +830,13 @@ class _GameMediumState extends State<GameMedium>
                             },
                             child: Text(user == null ? 'Login' : 'Logout'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  user == null ? Colors.white : Colors.red,
-                              foregroundColor:
-                                  user == null ? Colors.black : Colors.white,
+                              backgroundColor: user == null
+                                  ? Colors.white
+                                  : const Color.fromARGB(
+                                      255, 45, 45, 45), // Background color
+                              foregroundColor: user == null
+                                  ? Colors.black
+                                  : Colors.white, // Text color
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(30),
                               ),
@@ -764,11 +878,24 @@ class Grid extends StatelessWidget {
       ),
       itemBuilder: (context, index) {
         return Container(
-          color: gridColors[index],
+          decoration: BoxDecoration(
+            color: gridColors[index],
+            border: Border.all(
+              color: Color.fromARGB(
+                  255, 210, 214, 219), // Set the border color here
+              width: 2, // Set the border width here
+            ),
+            borderRadius: BorderRadius.circular(6),
+          ),
           child: Center(
             child: Text(
               gridContent[index],
-              style: TextStyle(color: Colors.white, fontSize: 24),
+              style: TextStyle(
+                color: Color.fromARGB(255, 39, 39, 39),
+                fontSize: 30,
+                fontFamily: 'FranklinGothic-Bold',
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         );
@@ -807,7 +934,8 @@ class Keyboard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: row.map((letter) {
-              final keyColor = keyboardColors[letter] ?? Colors.blueGrey;
+              final keyColor =
+                  keyboardColors[letter] ?? Color.fromARGB(255, 210, 214, 219);
 
               return GestureDetector(
                 onTap: () {
@@ -828,7 +956,12 @@ class Keyboard extends StatelessWidget {
                   child: Center(
                     child: Text(
                       letter,
-                      style: TextStyle(color: Colors.white, fontSize: 18),
+                      style: TextStyle(
+                        color: Color.fromARGB(255, 39, 39, 39),
+                        fontSize: 20,
+                        fontFamily: 'FranklinGothic-Bold',
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),

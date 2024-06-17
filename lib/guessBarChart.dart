@@ -3,8 +3,14 @@ import 'package:flutter/material.dart';
 class GuessStatsBarChart extends StatelessWidget {
   final Map<int, int> guessStats;
   final int barsCount;
+  final bool hasWon;
 
-  const GuessStatsBarChart({required this.guessStats, required this.barsCount, Key? key}) : super(key: key);
+  const GuessStatsBarChart({
+    required this.guessStats,
+    required this.barsCount,
+    required this.hasWon,
+    Key? key
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +38,7 @@ class GuessStatsBarChart extends StatelessWidget {
                     Container(
                       height: 20,
                       width: barWidth,
-                      color: Colors.green[300],
+                      color: hasWon ? Color.fromARGB(255, 140, 255, 186) : Colors.grey,
                     ),
                   ],
                 ),
@@ -40,7 +46,7 @@ class GuessStatsBarChart extends StatelessWidget {
               SizedBox(width: 8),
               Text(
                 '$count',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: Color.fromARGB(255, 140, 140, 140)),
               ),
             ],
           ),

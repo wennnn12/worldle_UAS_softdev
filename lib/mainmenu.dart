@@ -117,7 +117,7 @@ class MainMenu extends StatelessWidget {
                     child: Text(
                       'PLAY',
                       style: TextStyle(
-                        fontFamily: 'FranklinGothic-Bold', // Use Franklin Gothic font
+                        fontFamily: 'FranklinGothic', // Use Franklin Gothic font
                         fontWeight: FontWeight.bold, // Set the font weight to bold
                         color: const Color.fromARGB(
                             255, 0, 45, 10), // Set the text color to dimmer green
@@ -145,7 +145,7 @@ class MainMenu extends StatelessWidget {
                     child: Text(
                       'LOGIN',
                       style: TextStyle(
-                        fontFamily: 'FranklinGothic-Bold', // Use Franklin Gothic font
+                        fontFamily: 'FranklinGothic', // Use Franklin Gothic font
                         fontWeight: FontWeight.bold, // Set the font weight to bold
                         color: const Color.fromARGB(
                             255, 8, 4, 52), // Set the text color to dimmer green
