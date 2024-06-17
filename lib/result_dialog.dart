@@ -5,7 +5,7 @@ class ResultDialog extends StatelessWidget {
   final bool hasWon;
   final int attempts;
   final Future<void> Function() onRetry;
-  final Map<String, dynamic>? stats; 
+  final Map<String, dynamic>? stats;
   final bool isGuest;
   final Map<int, int> guessStats;
   final int barsCount;
@@ -29,38 +29,186 @@ class ResultDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(hasWon ? 'AMAZING!' : 'BETTER LUCK NEXT TIME!'),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      title: Column(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.red,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Color(0xFFFFCDD2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Icon(
+                    hasWon ? Icons.thumb_up : Icons.thumb_down,
+                    size: 40,
+                    color: Colors.black,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SizedBox(height: 10),
+          Text(
+            hasWon ? 'AMAZING!' : 'NICE TRY!',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 40,
+              fontFamily: 'Fraunces',
+            ),
+          ),
+        ],
+      ),
       content: isGuest
-         ? Text(hasWon ? 'Attempts: $attempts' : 'Better luck next time!')
+          ? Text(
+              hasWon ? ' $attempts Attempts! Impressive... LOGIN to see all your statistics! ' : 'LOGIN to see all your statistics!',
+              style: TextStyle(fontFamily: 'Schyler', fontSize: 16),
+            )
           : Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(hasWon ? Icons.thumb_up : Icons.thumb_down, size: 40, color: hasWon ? Colors.green : Colors.red),
-                SizedBox(height: 10),
                 Text(
                   'STATISTICS',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontFamily: 'FranklinGothic',
+                    color: Colors.grey, // Light grey color
+                  ),
                 ),
-                SizedBox(height: 10),
-                stats != null
-                   ? Column(
+                if (stats != null)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Column(
                         children: [
-                          Text('Match: ${stats!['matchesPlayed']}'),
-                          Text('Win %: ${(stats!['winPercentage']).toStringAsFixed(0)}'),
-                          Text('Streak: ${stats!['winStreak']}'),
-                          Text('Max Streak: ${stats!['highestWinStreak']}'),
+                          Text(
+                            '${stats!['matchesPlayed']}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 24,
+                              fontFamily: 'Schyler',
+                            ),
+                          ),
+                          Text(
+                            'Match',
+                            style: TextStyle(
+                              fontFamily: 'Schyler',
+                            ),
+                          ),
                         ],
-                      )
-                    : Text('No statistics available'),
-                SizedBox(height: 20),
-                Text('GUESS DISTRIBUTION'),
-                GuessStatsBarChart(guessStats: guessStats, barsCount: barsCount),
+                      ),
+                      Column(
+                        children: [
+                          Text(
+                            '${(stats!['winPercentage']).toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 24,
+                              fontFamily: 'Schyler',
+                            ),
+                          ),
+                          Text(
+                            'Win %',
+                            style: TextStyle(
+                              fontFamily: 'Schyler',
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          Text(
+                            '${stats!['winStreak']}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 24,
+                              fontFamily: 'Schyler',
+                            ),
+                          ),
+                          Text(
+                            'Streak',
+                            style: TextStyle(
+                              fontFamily: 'Schyler',
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          Text(
+                            '${stats!['highestWinStreak']}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 24,
+                              fontFamily: 'Schyler',
+                            ),
+                          ),
+                          Text(
+                            'Max Streaks',
+                            style: TextStyle(
+                              fontFamily: 'Schyler',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
+                else
+                  Text(
+                    'No statistics available',
+                    style: TextStyle(
+                      fontFamily: 'Schyler',
+                    ),
+                  ),
+
+                SizedBox(height: 10),
+                GuessStatsBarChart(
+                    guessStats: guessStats, 
+                    barsCount: barsCount,
+                    hasWon: hasWon),
               ],
             ),
       actions: [
-        TextButton(
-          onPressed: () => handleReset(context),
-          child: Text('Play Again?'),
+        Column(
+          children: [
+            Text(
+              'Play Again?',
+              style: TextStyle(
+                fontSize: 16,
+                fontFamily: 'FranklinGothic',
+                color: Colors.grey,
+              ),
+            ),
+            Divider(),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color.fromARGB(255, 140, 255, 186),
+                minimumSize: Size(175, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(40),
+                ),
+              ),
+              onPressed: () => handleReset(context),
+              child: Text(
+                'PLAY',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: const Color.fromARGB(255, 0, 45, 10),
+                  fontFamily: 'FranklinGothic',
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );

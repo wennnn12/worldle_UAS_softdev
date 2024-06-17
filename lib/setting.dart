@@ -30,7 +30,8 @@ class _SettingPageState extends State<SettingPage> {
   @override
   void initState() {
     super.initState();
-    _isDarkMode = widget.isGameStarted; // Initialize _isDarkMode with the game state
+    _isDarkMode =
+        widget.isGameStarted; // Initialize _isDarkMode with the game state
     _loadUserSettings();
   }
 
@@ -64,10 +65,12 @@ class _SettingPageState extends State<SettingPage> {
         .get();
     final words = wordList.docs.map((doc) => doc['word'] as String).toList();
     words.shuffle();
-    return words.isNotEmpty ? words.first : 'ERROR'; // Fallback word if list is empty
+    return words.isNotEmpty
+        ? words.first
+        : 'ERROR'; // Fallback word if list is empty
   }
 
-  @override
+   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -77,7 +80,7 @@ class _SettingPageState extends State<SettingPage> {
             Navigator.pop(context);
           },
         ),
-        title: Center(child: Text('SETTING')),
+        title: Center(),
         automaticallyImplyLeading: false,
       ),
       body: Center(
@@ -85,8 +88,21 @@ class _SettingPageState extends State<SettingPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Level',
-              style: TextStyle(fontSize: 24),
+              'SETTING',
+              style: TextStyle(
+                fontFamily: 'FranklinGothic',
+                fontWeight: FontWeight.bold,
+                fontSize: 38,
+              ),
+            ),
+        
+            SizedBox(height: 20),
+            Text(
+              'DIFFICULTY',
+              style: TextStyle(
+                fontSize: 34,
+                fontFamily: 'FranklinGothic',
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -95,9 +111,27 @@ class _SettingPageState extends State<SettingPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Easy'),
-                      Text('Medium'),
-                      Text('Hard'),
+                      Text(
+                        'Easy',
+                        style: TextStyle(
+                          fontFamily: 'FranklinGothic',
+                          fontSize: 30,
+                        ),
+                      ),
+                      Text(
+                        'Medium',
+                        style: TextStyle(
+                          fontFamily: 'FranklinGothic',
+                          fontSize: 30,
+                        ),
+                      ),
+                      Text(
+                        'Hard',
+                        style: TextStyle(
+                          fontFamily: 'FranklinGothic',
+                          fontSize: 30,
+                        ),
+                      ),
                     ],
                   ),
                   Slider(
@@ -111,26 +145,23 @@ class _SettingPageState extends State<SettingPage> {
                         : (double value) {
                             setState(() {
                               _difficultyLevel = value.round();
-                              _saveUserSettings(); // Save settings on change
+                              _saveUserSettings();
                             });
                           },
+                    activeColor: Color.fromARGB(255, 42, 42, 42), // Custom color
+                    inactiveColor: Colors.grey, // Custom color
                   ),
-                  SizedBox(height: 5),
-                  Text(
-                    'Theme',
-                    style: TextStyle(fontSize: 24),
-                  ),
+                  SizedBox(height: 25),
                   SwitchListTile(
                     title: Text(_isDarkMode ? 'Night Mode' : 'Light Mode'),
                     value: _isDarkMode,
                     onChanged: widget.isGameStarted
                         ? null
                         : (bool value) {
-                            // Disable if the game has started
                             setState(() {
                               _isDarkMode = value;
                               widget.toggleTheme(_isDarkMode);
-                              _saveUserSettings(); // Save settings on change
+                              _saveUserSettings();
                             });
                           },
                   ),
@@ -143,8 +174,8 @@ class _SettingPageState extends State<SettingPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           if (!widget.hasGuessed) {
-            // Refresh the word if no guess has been made
-            String newWord = await _fetchRandomWord(_getDifficultyText().toLowerCase());
+            String newWord =
+                await _fetchRandomWord(_getDifficultyText().toLowerCase());
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -179,10 +210,15 @@ class _SettingPageState extends State<SettingPage> {
               ),
             );
           } else {
-            Navigator.pop(context); // Just go back to the game
+            Navigator.pop(context);
           }
         },
         child: Icon(Icons.check),
+        backgroundColor: Color.fromARGB(255, 182, 182, 182), // Custom color
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10), // Custom shape
+        ),
+        elevation: 5,
       ),
     );
   }

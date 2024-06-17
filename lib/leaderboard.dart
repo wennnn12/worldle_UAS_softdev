@@ -1,8 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class Leaderboard extends StatelessWidget {
+class Leaderboard extends StatefulWidget {
   const Leaderboard({Key? key}) : super(key: key);
+
+  @override
+  _LeaderboardState createState() => _LeaderboardState();
+}
+
+class _LeaderboardState extends State<Leaderboard> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
 
   Future<List<Map<String, dynamic>>> _fetchLeaderboardData(String difficulty) async {
     final usersCollection = FirebaseFirestore.instance.collection('users');
@@ -35,13 +48,13 @@ class Leaderboard extends StatelessWidget {
   Color _getBackgroundColor(int rank) {
     switch (rank) {
       case 1:
-        return Colors.greenAccent;
+        return Color.fromARGB(255, 140, 255, 186);
       case 2:
-        return Colors.yellowAccent;
+        return Color.fromARGB(255, 254, 255, 182);
       case 3:
-        return Colors.redAccent;
+        return Color.fromARGB(255, 255,182,190);
       default:
-        return Colors.grey.shade500;
+        return const Color.fromARGB(255, 209, 209, 209);
     }
   }
 
@@ -142,17 +155,38 @@ class Leaderboard extends StatelessWidget {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Leaderboard'),
+          title: Text(
+            'Leaderboard',
+            style: TextStyle(
+              fontFamily: 'FranklinGothic',
+              fontWeight: FontWeight.bold,
+              fontSize: 38,
+            ),
+          ),
           centerTitle: true,
           bottom: TabBar(
+            controller: _tabController,
             tabs: [
               Tab(text: 'Easy'),
               Tab(text: 'Medium'),
               Tab(text: 'Hard'),
             ],
+            labelStyle: TextStyle(
+              fontFamily: 'FranklinGothic',
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
+            unselectedLabelStyle: TextStyle(
+              fontFamily: 'FranklinGothic',
+              fontSize: 16,
+            ),
+            labelColor: const Color.fromARGB(255, 39, 39, 39),
+            unselectedLabelColor: Colors.grey,
+            indicatorColor: const Color.fromARGB(255, 39, 39, 39),
           ),
         ),
         body: TabBarView(
+          controller: _tabController,
           children: [
             _buildLeaderboard('easy'),
             _buildLeaderboard('medium'),

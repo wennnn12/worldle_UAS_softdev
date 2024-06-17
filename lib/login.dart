@@ -7,6 +7,7 @@ import 'gameHard.dart'; // Import the GameHard file
 import 'admin/admin.dart';
 import 'register.dart';
 import 'setting.dart'; // Import setting.dart
+import 'dart:math' as Math;
 
 class LoginPage extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
@@ -122,89 +123,185 @@ class LoginPage extends StatelessWidget {
     }
   }
 
-  @override
+ @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Login'),
-        centerTitle: true,
-        elevation: 0,
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(height: 20),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Email',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Container(
-                    width: 250,
-                    child: TextField(
-                      controller: emailController,
-                      decoration: InputDecoration(
-                        hintText: 'Enter your email',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Password',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Container(
-                    width: 250,
-                    child: TextField(
-                      controller: passwordController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        hintText: 'Enter your password',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () => _loginUser(context),
-                child: Text('Login'),
-              ),
-              SizedBox(height: 10),
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => RegisterPage(
-                        toggleTheme: toggleTheme,
-                        setGameStarted: setGameStarted,
-                        isGameStarted: isGameStarted,
-                      ),
-                    ),
-                  );
-                },
-                child: Text(
-                  "Don't have an account? Signup",
-                  style: TextStyle(
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-              ),
-            ],
+      backgroundColor: Color.fromARGB(255, 245, 245, 238),
+      body: Stack(
+        children: [
+          CustomPaint(
+            painter: BackgroundPainter(),
+            size: Size.infinite,
           ),
-        ),
+          CustomPaint(
+            painter: MirroredBackgroundPainter(),
+            size: Size.infinite,
+          ),
+          Center(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(height: 20),
+                  Image.asset(
+                    'assets/logo.png',
+                    height: 300,
+                  ),
+                  SizedBox(height: 40),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Email',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      Container(
+                        width: 300,
+                        child: TextField(
+                          controller: emailController,
+                          decoration: InputDecoration(
+                            hintText: 'example@gmail.com',
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Password',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      Container(
+                        width: 300,
+                        child: TextField(
+                          controller: passwordController,
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            hintText: 'Enter your password',
+                            filled: true,
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () => _loginUser(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color.fromARGB(255, 192, 204, 220),
+                      minimumSize: Size(200, 50),
+                    ),
+                    child: Text(
+                      'LOGIN',
+                      style: TextStyle(
+                        fontFamily: 'FranklinGothic-Bold',
+                        fontWeight: FontWeight.bold,
+                        color: const Color.fromARGB(255, 8, 4, 52),
+                        fontSize: 26,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RegisterPage(
+                            toggleTheme: toggleTheme,
+                            setGameStarted: setGameStarted,
+                            isGameStarted: isGameStarted,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      "Don't have an account? Signup",
+                      style: TextStyle(
+                        decoration: TextDecoration.underline,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
+}
+
+class BackgroundPainter extends CustomPainter {
+  double degToRad(double deg) => deg * (Math.pi / 180.0);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topRight,
+        end: Alignment.bottomLeft,
+        colors: [Colors.grey.shade300, Colors.black],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    Path path = Path();
+    path.moveTo(size.width, 0);
+    path.quadraticBezierTo(size.width * -0.25, size.height * -0.25, size.width * 0.0, size.height);
+    path.lineTo(0, size.height);
+    path.lineTo(0, 0);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+
+class MirroredBackgroundPainter extends CustomPainter {
+  double degToRad(double deg) => deg * (Math.pi / 180.0);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topRight,
+        end: Alignment.bottomLeft,
+        colors: [Colors.grey.shade300, Color.fromARGB(255, 98, 98, 98) ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    Path path = Path();
+    path.moveTo(0, size.height);
+    path.quadraticBezierTo(size.width * 1.20, size.height * 1.35, size.width, 0);
+    path.lineTo(size.width, 0);
+    path.lineTo(size.width, size.height);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

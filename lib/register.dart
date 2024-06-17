@@ -2,12 +2,68 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login.dart'; // Import the login page
+import 'dart:math' as Math;
+
+class BackgroundPainter extends CustomPainter {
+  double degToRad(double deg) => deg * (Math.pi / 180.0);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topRight,
+        end: Alignment.bottomLeft,
+        colors: [Colors.grey.shade300, Colors.black],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    Path path = Path();
+    path.moveTo(size.width, 0);
+    path.quadraticBezierTo(
+        size.width * -0.25, size.height * -0.25, size.width * 0.0, size.height);
+    path.lineTo(0, size.height);
+    path.lineTo(0, 0);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+
+class MirroredBackgroundPainter extends CustomPainter {
+  double degToRad(double deg) => deg * (Math.pi / 180.0);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topRight,
+        end: Alignment.bottomLeft,
+        colors: [Colors.grey.shade300, Color.fromARGB(255, 98, 98, 98)],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+
+    Path path = Path();
+    path.moveTo(0, size.height);
+    path.quadraticBezierTo(
+        size.width * 1.20, size.height * 1.35, size.width, 0);
+    path.lineTo(size.width, 0);
+    path.lineTo(size.width, size.height);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
 
 class RegisterPage extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
   final Function(bool) toggleTheme;
   final Function(bool) setGameStarted;
   final bool isGameStarted;
@@ -28,13 +84,17 @@ class RegisterPage extends StatelessWidget {
         return;
       }
 
-      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      UserCredential userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
       // Add user data to Firestore collection with isAdmin set to false
-      await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .set({
         'email': emailController.text.trim(),
         'username': usernameController.text.trim(),
         'isAdmin': false, // Set isAdmin to false for new users
@@ -69,101 +129,163 @@ class RegisterPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Register'),
-        centerTitle: true,
-        elevation: 0,
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(height: 20),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: Color.fromARGB(255, 245, 245, 238),
+      body: CustomPaint(
+        painter: BackgroundPainter(),
+        child: CustomPaint(
+          painter: MirroredBackgroundPainter(),
+          child: Center(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: 10),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'Email',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  Image.asset(
+                    'assets/logo.png',
+                    height: 250.0,
                   ),
-                  Container(
-                    width: 250,
-                    child: TextField(
-                      controller: emailController,
-                      decoration: InputDecoration(
-                        hintText: 'Enter your email',
+                  SizedBox(height: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Email',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.grey),
+                      ),
+                      SizedBox(height: 5),
+                      Container(
+                        width: 280,
+                        height: 50,
+                        child: TextField(
+                          controller: emailController,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            hintText: 'example@gmail.com',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Name',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.grey),
+                      ),
+                      SizedBox(height: 5),
+                      Container(
+                        width: 280,
+                        height: 50,
+                        child: TextField(
+                          controller: usernameController,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            hintText: 'Enter your name',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Password',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.grey),
+                      ),
+                      SizedBox(height: 5),
+                      Container(
+                        width: 280,
+                        height: 50,
+                        child: TextField(
+                          controller: passwordController,
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            hintText: 'Enter your password',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Confirm Password',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.grey),
+                      ),
+                      SizedBox(height: 5),
+                      Container(
+                        width: 280,
+                        height: 50,
+                        child: TextField(
+                          controller: confirmPasswordController,
+                          obscureText: true,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            hintText: 'Confirm your password',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () => _registerUser(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color.fromARGB(255, 192, 204, 220),
+                      minimumSize: Size(200, 55),
+                    ),
+                    child: Text(
+                      'LOGIN',
+                      style: TextStyle(
+                        fontFamily: 'FranklinGothic-Bold',
+                        fontWeight: FontWeight.bold,
+                        color: const Color.fromARGB(255, 8, 4, 52),
+                        fontSize: 25,
                       ),
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Username',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Container(
-                    width: 250,
-                    child: TextField(
-                      controller: usernameController,
-                      decoration: InputDecoration(
-                        hintText: 'Enter your username',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Password',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Container(
-                    width: 250,
-                    child: TextField(
-                      controller: passwordController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        hintText: 'Enter your password',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Confirm Password',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Container(
-                    width: 250,
-                    child: TextField(
-                      controller: confirmPasswordController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        hintText: 'Confirm your password',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () => _registerUser(context),
-                child: Text('Submit'),
-              ),
-            ],
+            ),
           ),
         ),
       ),
