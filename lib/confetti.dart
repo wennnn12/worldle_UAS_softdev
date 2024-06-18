@@ -43,11 +43,11 @@ class _ConfettiAnimationState extends State<ConfettiAnimation> {
           child: ConfettiWidget(
             confettiController: _controllerLeft,
             blastDirection: -pi / 3, // Blasts at a 60-degree angle to the right
-            maxBlastForce: 100, // Adjust blast force to cover the screen
-            minBlastForce: 50,
-            emissionFrequency: 0.08,
-            numberOfParticles: 10,
-            gravity: 0.7,
+            maxBlastForce: 150, // Adjust blast force to cover the screen
+            minBlastForce: 10,
+            emissionFrequency: 0.5,
+            numberOfParticles: 2,
+            gravity: 1,
             shouldLoop: false,
             colors: const [
               Colors.red,
@@ -64,11 +64,11 @@ class _ConfettiAnimationState extends State<ConfettiAnimation> {
           child: ConfettiWidget(
             confettiController: _controllerRight,
             blastDirection: -2 * pi / 3, // Blasts at a 120-degree angle to the left
-            maxBlastForce: 100, // Adjust blast force to cover the screen
-            minBlastForce: 50,
-            emissionFrequency: 0.08,
-            numberOfParticles: 10,
-            gravity: 0.7,
+            maxBlastForce: 150, // Adjust blast force to cover the screen
+            minBlastForce: 10,
+            emissionFrequency: 0.5,
+            numberOfParticles: 2,
+            gravity: 1,
             shouldLoop: false,
             colors: const [
               Colors.red,

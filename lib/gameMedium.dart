@@ -8,6 +8,7 @@ import 'result_dialog.dart';
 import 'login.dart';
 import 'setting.dart';
 import 'mainmenu.dart';
+import 'fliptile_anim.dart'; // Add this import
 
 class GameMedium extends StatefulWidget {
   final String initialTargetWord;
@@ -36,6 +37,8 @@ class _GameMediumState extends State<GameMedium>
   User? currentUser;
   Map<String, dynamic>? userStats;
 
+  List<GlobalKey<FlipTileState>> flipTileKeys = List.generate(25, (index) => GlobalKey<FlipTileState>()); // Add this line
+
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late AnimationController _animationController;
   late Animation<Offset> _slideAnimation;
@@ -51,7 +54,6 @@ class _GameMediumState extends State<GameMedium>
   void initState() {
     super.initState();
     _stopwatch = Stopwatch(); // Initialize the stopwatch
-    _stopwatch.start(); // Start the stopwatch as soon as the game screen loads
     _fetchRandomWord().then((newWord) {
       setState(() {
         targetWord = newWord;
@@ -128,6 +130,10 @@ class _GameMediumState extends State<GameMedium>
 
   void handleKeyPress(String letter) {
     setState(() {
+      if (!_stopwatch.isRunning) {
+        _stopwatch.start(); // Start the stopwatch when the first letter is pressed
+      }
+
       int startIndex = currentRow * 5;
       int endIndex = startIndex + 5;
 
@@ -216,9 +222,15 @@ class _GameMediumState extends State<GameMedium>
         }
       }
 
+      // Trigger the flip animation for each tile in the current row
+      for (int i = startIndex; i < endIndex; i++) {
+        flipTileKeys[i].currentState?.flip();
+      }
+
       if (hasWon) {
         _stopwatch.stop(); // Stop the stopwatch if the user wins
         await _updateStats(true);
+        await Future.delayed(Duration(seconds: 1)); // Add 1 second delay
         _showResultDialog(true);
       } else if (currentRow >= 4) {
         _stopwatch.stop(); // Stop the stopwatch if the user loses
@@ -256,48 +268,47 @@ class _GameMediumState extends State<GameMedium>
     return guessStats;
   }
 
-void _showResultDialog(bool hasWon) async {
-  String difficulty = 'medium'; // Replace with current difficulty
-  int barsCount = difficulty == 'easy'
-      ? 6
-      : difficulty == 'medium'
-          ? 5
-          : 4;
-  Map<int, int> guessStats = await _fetchGuessStats(difficulty);
+  void _showResultDialog(bool hasWon) async {
+    String difficulty = 'medium'; // Replace with current difficulty
+    int barsCount = difficulty == 'easy'
+        ? 6
+        : difficulty == 'medium'
+            ? 5
+            : 4;
+    Map<int, int> guessStats = await _fetchGuessStats(difficulty);
 
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => Stack(
-      alignment: Alignment.center,
-      children: [
-        ResultDialog(
-          hasWon: hasWon,
-          attempts: attempts,
-          onRetry: () async {
-            await _fetchRandomWord().then((newWord) {
-              setState(() {
-                targetWord = newWord;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Stack(
+        alignment: Alignment.center,
+        children: [
+          ResultDialog(
+            hasWon: hasWon,
+            attempts: attempts,
+            onRetry: () async {
+              await _fetchRandomWord().then((newWord) {
+                setState(() {
+                  targetWord = newWord;
+                });
               });
-            });
-            handleReset();
-          },
-          stats: isGuest ? null : userStats,
-          isGuest: isGuest,
-          guessStats: guessStats,
-          barsCount: barsCount,
-        ),
-        if (hasWon)
-          ConfettiAnimation(hasWon: hasWon),
-      ],
-    ),
-  );
+              handleReset();
+            },
+            stats: isGuest ? null : userStats,
+            isGuest: isGuest,
+            guessStats: guessStats,
+            barsCount: barsCount,
+          ),
+          if (hasWon) ConfettiAnimation(hasWon: hasWon),
+        ],
+      ),
+    );
 
-  // Keep the confetti animation running for 2 seconds after the dialog appears
-  if (hasWon) {
-    await Future.delayed(Duration(seconds: 2));
+    // Keep the confetti animation running for 2 seconds after the dialog appears
+    if (hasWon) {
+      await Future.delayed(Duration(seconds: 2));
+    }
   }
-}
 
   Future<void> _updateStats(bool hasWon) async {
     if (isGuest) return;
@@ -375,6 +386,11 @@ void _showResultDialog(bool hasWon) async {
       currentRow = 0;
       attempts = 0;
       _stopwatch.reset(); // Reset the stopwatch when the game is reset
+
+      // Reset the state of each flip tile
+      for (int i = 0; i < flipTileKeys.length; i++) {
+        flipTileKeys[i].currentState?.reset();
+      }
     });
   }
 
@@ -680,19 +696,20 @@ void _showResultDialog(bool hasWon) async {
                     color: _isDarkMode //Warna Backgroundnya Grid
                         ? Color.fromARGB(255, 33, 33, 33)
                         : Color.fromARGB(255, 255, 255, 255),
-                    child:
-                        Grid(
-                        gridContent: gridContent, 
-                        gridColors: gridColors,
-                        isDarkMode: _isDarkMode
-                        ),
+                    child: Grid(
+                      gridContent: gridContent,
+                      gridColors: gridColors,
+                      isDarkMode: _isDarkMode,
+                      flipTileKeys: flipTileKeys, // Add this line
+                    ),
                   ),
                 ),
                 Expanded(
                   flex: 4,
                   child: Container(
-                    color: _isDarkMode 
-                        ? Color.fromARGB(255, 26, 26, 26) //Warna Backgroundnya Keyboard
+                    color: _isDarkMode
+                        ? Color.fromARGB(
+                            255, 26, 26, 26) //Warna Backgroundnya Keyboard
                         : const Color.fromARGB(255, 250, 250, 250),
                     child: Column(
                       children: [
@@ -902,11 +919,13 @@ class Grid extends StatelessWidget {
   final List<String> gridContent;
   final List<Color> gridColors;
   final bool isDarkMode; // Add this line
+  final List<GlobalKey<FlipTileState>> flipTileKeys; // Add this line
 
   const Grid({
     required this.gridContent,
     required this.gridColors,
     required this.isDarkMode, // Add this line
+    required this.flipTileKeys, // Add this line
     Key? key,
   }) : super(key: key);
 
@@ -922,30 +941,12 @@ class Grid extends StatelessWidget {
         crossAxisCount: 5,
       ),
       itemBuilder: (context, index) {
-        return Container(
-          decoration: BoxDecoration(
-            color: gridColors[index],
-            border: Border.all(
-              color:  isDarkMode // Use the parameter here
-                  ? Color.fromARGB(255, 50, 50, 50)
-                  : Color.fromARGB(255, 210, 214, 219), // Set the border color here
-              width: 2, // Set the border width here
-            ),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Center(
-            child: Text(
-              gridContent[index],
-              style: TextStyle(
-                color: isDarkMode // Use the parameter here
-                    ? Color.fromARGB(255, 255, 255, 255)
-                    : Color.fromARGB(255, 0, 0, 0),
-                fontSize: 30,
-                fontFamily: 'FranklinGothic-Bold',
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+        return FlipTile(
+          key: flipTileKeys[index], // Use the key here
+          letter: gridContent[index],
+          color: gridColors[index],
+          delay: (index % 5) * 100, // Adjust delay for each tile in the row
+          isDarkMode: isDarkMode, // Add this line
         );
       },
     );
