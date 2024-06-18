@@ -172,9 +172,11 @@ class ResultDialog extends StatelessWidget {
 
                 SizedBox(height: 10),
                 GuessStatsBarChart(
-                    guessStats: guessStats, 
-                    barsCount: barsCount,
-                    hasWon: hasWon),
+                  guessStats: guessStats, 
+                  barsCount: barsCount,
+                  hasWon: hasWon,
+                  attempts: attempts, // Pass the current attempts
+                ),
               ],
             ),
       actions: [
