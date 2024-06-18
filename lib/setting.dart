@@ -70,7 +70,7 @@ class _SettingPageState extends State<SettingPage> {
         : 'ERROR'; // Fallback word if list is empty
   }
 
-   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -95,7 +95,6 @@ class _SettingPageState extends State<SettingPage> {
                 fontSize: 38,
               ),
             ),
-        
             SizedBox(height: 20),
             Text(
               'DIFFICULTY',
@@ -148,10 +147,8 @@ class _SettingPageState extends State<SettingPage> {
                               _saveUserSettings();
                             });
                           },
-                    activeColor: Color.fromARGB(255, 42, 42, 42), // Custom color
-                    inactiveColor: Colors.grey, // Custom color
                   ),
-                  SizedBox(height: 25),
+                  SizedBox(height: 35),
                   SwitchListTile(
                     title: Text(_isDarkMode ? 'Night Mode' : 'Light Mode'),
                     value: _isDarkMode,
@@ -214,7 +211,6 @@ class _SettingPageState extends State<SettingPage> {
           }
         },
         child: Icon(Icons.check),
-        backgroundColor: Color.fromARGB(255, 182, 182, 182), // Custom color
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10), // Custom shape
         ),

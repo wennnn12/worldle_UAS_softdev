@@ -6,6 +6,22 @@ import 'gameEasy.dart';
 import 'gameMedium.dart';
 import 'gameHard.dart';
 
+// Define custom ThemeData
+final ThemeData customDarkTheme = ThemeData(
+  brightness: Brightness.dark,
+  primaryColor: Colors.grey[900],
+  
+  scaffoldBackgroundColor: Colors.grey[850],
+
+  // Customize more properties as needed
+);
+
+final ThemeData customLightTheme = ThemeData(
+  brightness: Brightness.light,
+  primaryColor: Colors.white,
+  scaffoldBackgroundColor: Colors.grey[100], // Customize more properties as needed
+);
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -45,7 +61,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Worldle',
-      theme: _isDarkMode ? ThemeData.dark() : ThemeData.light(),
+      theme: _isDarkMode ? customDarkTheme : customLightTheme,
       home: MainMenu(
         toggleTheme: _toggleTheme,
         setGameStarted: _setGameStarted,
