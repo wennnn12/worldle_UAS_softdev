@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Leaderboard extends StatefulWidget {
-  final bool isDarkMode; // Add this line
+  final bool isDarkMode;
 
-  const Leaderboard({Key? key, required this.isDarkMode}) : super(key: key); // Modify constructor
+  const Leaderboard({Key? key, required this.isDarkMode}) : super(key: key);
 
   @override
   _LeaderboardState createState() => _LeaderboardState();
@@ -47,6 +47,37 @@ class _LeaderboardState extends State<Leaderboard> with SingleTickerProviderStat
     return leaderboardData.take(10).toList();
   }
 
+  Widget _buildTrophyIcon(int rank) {
+    switch (rank) {
+      case 1:
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Image.asset('assets/gold.png', width: 40, height: 40),
+          ],
+        );
+      case 2:
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Image.asset('assets/silver.png', width: 40, height: 40),
+          ],
+        );
+      case 3:
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            Image.asset('assets/bronze.png', width: 40, height: 40),
+          ],
+        );
+      default:
+        return Text(
+          '#$rank',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black),
+        );
+    }
+  }
+
   Color _getBackgroundColor(int rank) {
     switch (rank) {
       case 1:
@@ -56,9 +87,7 @@ class _LeaderboardState extends State<Leaderboard> with SingleTickerProviderStat
       case 3:
         return Color.fromARGB(255, 224, 160, 168);
       default:
-        return widget.isDarkMode 
-        ? const Color.fromARGB(255, 80, 80, 80) 
-        : Color.fromARGB(255, 240, 240, 240);
+        return widget.isDarkMode ? const Color.fromARGB(255, 80, 80, 80) : const Color.fromARGB(255, 240, 240, 240);
     }
   }
 
@@ -122,13 +151,7 @@ class _LeaderboardState extends State<Leaderboard> with SingleTickerProviderStat
                           borderRadius: BorderRadius.circular(10.0),
                         ),
                         child: ListTile(
-                          leading: Container(
-                            width: 40,
-                            child: Text(
-                              '#$rank',
-                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black),
-                            ),
-                          ),
+                          leading: _buildTrophyIcon(rank),
                           title: Padding(
                             padding: const EdgeInsets.only(left: 16.0),
                             child: Text(
