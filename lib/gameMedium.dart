@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:worldle_game/history.dart';
+import 'confetti.dart';
 import 'leaderboard.dart';
 import 'result_dialog.dart';
 import 'login.dart';
@@ -255,34 +256,48 @@ class _GameMediumState extends State<GameMedium>
     return guessStats;
   }
 
-  void _showResultDialog(bool hasWon) async {
-    String difficulty = 'medium'; // Replace with current difficulty
-    int barsCount = 5; // 5 bars for medium difficulty
-    Map<int, int> guessStats = await _fetchGuessStats(difficulty);
+void _showResultDialog(bool hasWon) async {
+  String difficulty = 'medium'; // Replace with current difficulty
+  int barsCount = difficulty == 'easy'
+      ? 6
+      : difficulty == 'medium'
+          ? 5
+          : 4;
+  Map<int, int> guessStats = await _fetchGuessStats(difficulty);
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => ResultDialog(
-        hasWon: hasWon,
-        attempts: attempts,
-        onRetry: () async {
-          await _fetchRandomWord().then((newWord) {
-            setState(() {
-              targetWord = newWord;
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => Stack(
+      alignment: Alignment.center,
+      children: [
+        ResultDialog(
+          hasWon: hasWon,
+          attempts: attempts,
+          onRetry: () async {
+            await _fetchRandomWord().then((newWord) {
+              setState(() {
+                targetWord = newWord;
+              });
             });
-          });
-          handleReset();
-        },
-        stats: isGuest
-            ? null
-            : userStats, // Only show stats if user is not a guest
-        isGuest: isGuest,
-        guessStats: guessStats,
-        barsCount: barsCount,
-      ),
-    );
+            handleReset();
+          },
+          stats: isGuest ? null : userStats,
+          isGuest: isGuest,
+          guessStats: guessStats,
+          barsCount: barsCount,
+        ),
+        if (hasWon)
+          ConfettiAnimation(hasWon: hasWon),
+      ],
+    ),
+  );
+
+  // Keep the confetti animation running for 2 seconds after the dialog appears
+  if (hasWon) {
+    await Future.delayed(Duration(seconds: 2));
   }
+}
 
   Future<void> _updateStats(bool hasWon) async {
     if (isGuest) return;
