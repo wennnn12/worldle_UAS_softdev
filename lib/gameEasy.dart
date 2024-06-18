@@ -166,10 +166,15 @@ class _GameEasyState extends State<GameEasy>
     });
   }
 
+bool _isSubmitting = false;
+
 Future<void> handleSubmit() async {
+  if (_isSubmitting) return; // Prevent submission if already submitting
+
   setState(() {
     _isGameStarted = true;
     widget.onGameStarted(true);
+    _isSubmitting = true; // Set the submitting flag to true
   });
 
   int startIndex = currentRow * 5;
@@ -188,6 +193,9 @@ Future<void> handleSubmit() async {
 
     if (!await _isValidWord(inputtedWord)) {
       _showInvalidWordMessage();
+      setState(() {
+        _isSubmitting = false; // Reset the submitting flag
+      });
       return; // Exit the function if the word is not valid
     }
 
@@ -204,6 +212,7 @@ Future<void> handleSubmit() async {
       targetLetterCounts[letter] = targetLetterCounts[letter]! + 1;
     }
 
+    List<bool> markedCorrect = List.generate(5, (index) => false);
     for (int i = 0; i < 5; i++) {
       if (gridContent[startIndex + i] == targetWord[i]) {
         gridColors[startIndex + i] = Color.fromARGB(255, 140, 255, 186);
@@ -211,6 +220,7 @@ Future<void> handleSubmit() async {
             Color.fromARGB(255, 140, 255, 186);
         targetLetterCounts[gridContent[startIndex + i]] =
             targetLetterCounts[gridContent[startIndex + i]]! - 1;
+        markedCorrect[i] = true;
       } else {
         gridColors[startIndex + i] = Colors.grey;
         hasWon = false;
@@ -219,7 +229,7 @@ Future<void> handleSubmit() async {
 
     // Second pass: Mark present but misplaced letters (yellow)
     for (int i = 0; i < 5; i++) {
-      if (gridColors[startIndex + i] != Color.fromARGB(255, 140, 255, 186) &&
+      if (!markedCorrect[i] &&
           targetLetterCounts[gridContent[startIndex + i]] != null &&
           targetLetterCounts[gridContent[startIndex + i]]! > 0) {
         gridColors[startIndex + i] = Color.fromARGB(220, 254, 255, 182);
@@ -228,7 +238,8 @@ Future<void> handleSubmit() async {
           keyboardColors[gridContent[startIndex + i]] =
               Color.fromARGB(220, 254, 255, 182);
         }
-        targetLetterCounts[gridContent[startIndex + i]]! - 1;
+        targetLetterCounts[gridContent[startIndex + i]] =
+            targetLetterCounts[gridContent[startIndex + i]]! - 1;
       } else if (gridColors[startIndex + i] == Colors.grey &&
           !keyboardColors.containsKey(gridContent[startIndex + i])) {
         keyboardColors[gridContent[startIndex + i]] = Colors.grey;
@@ -248,6 +259,7 @@ Future<void> handleSubmit() async {
     } else if (currentRow >= 5) {
       _stopwatch.stop(); // Stop the stopwatch if the user loses
       await _updateStats(false);
+      await Future.delayed(Duration(seconds: 1));
       _showResultDialog(false);
     } else {
       setState(() {
@@ -255,38 +267,39 @@ Future<void> handleSubmit() async {
       });
     }
   }
+
+  // Add a 2-second delay before allowing the next submission
+  await Future.delayed(Duration(seconds: 2));
+
+  setState(() {
+    _isSubmitting = false; // Reset the submitting flag
+  });
 }
 
 Future<bool> _isValidWord(String word) async {
-  final wordList = await FirebaseFirestore.instance.collection('Wordlists').get();
-  final words = wordList.docs.map((doc) => doc['word'] as String).toList();
-  return words.contains(word);
+  final wordList = await FirebaseFirestore.instance
+      .collection('Wordlists')
+      .where('word', isEqualTo: word)
+      .get();
+  return wordList.docs.isNotEmpty;
 }
 
 void _showInvalidWordMessage() {
   final overlay = Overlay.of(context);
   final overlayEntry = OverlayEntry(
     builder: (context) => Positioned(
-      top: MediaQuery.of(context).size.height * 0.2,
+      top: MediaQuery.of(context).size.height * 0.3, // Adjusted position
       left: MediaQuery.of(context).size.width * 0.1,
       right: MediaQuery.of(context).size.width * 0.1,
       child: Material(
         color: Colors.transparent,
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-          decoration: BoxDecoration(
-            color: Colors.red.withOpacity(0.8),
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          child: Center(
-            child: Text(
-              "Not in the word list",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18.0,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          color: Colors.red.withOpacity(0.8),
+          child: Text(
+            "That's not a valid word",
+            style: TextStyle(color: Colors.white, fontSize: 16),
+            textAlign: TextAlign.center,
           ),
         ),
       ),
@@ -294,9 +307,10 @@ void _showInvalidWordMessage() {
   );
 
   overlay?.insert(overlayEntry);
-  Future.delayed(Duration(seconds: 1), () => overlayEntry.remove());
+  Future.delayed(Duration(seconds: 2), () {
+    overlayEntry.remove();
+  });
 }
-
   Future<Map<int, int>> _fetchGuessStats(String difficulty) async {
     if (isGuest) return {};
 
