@@ -30,6 +30,9 @@ flutter:
   assets:
     - assets/logo.png
     - assets/bloons td 6.jpg
+    - assets/gold.png
+    - assets/silver.png
+    - assets/bronze.png
 
   fonts:
     - family: FranklinGothic
