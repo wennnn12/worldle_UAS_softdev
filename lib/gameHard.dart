@@ -26,14 +26,7 @@ class _GameHardState extends State<GameHard>
     with SingleTickerProviderStateMixin {
   late String targetWord;
   List<String> gridContent = List.generate(20, (index) => '');
-  List<Color> gridColors = List.generate(
-      20,
-      (index) => const Color.fromARGB(
-            255,
-            250,
-            250,
-            250,
-          ));
+  late List<Color> gridColors;
   Map<String, Color> keyboardColors = {};
   int currentRow = 0;
   int attempts = 0;
@@ -69,6 +62,13 @@ class _GameHardState extends State<GameHard>
     _slideAnimation = Tween<Offset>(begin: Offset(-1, 0), end: Offset(0, 0))
         .animate(_animationController);
     _checkUser();
+    initializeGridColors();
+  }
+
+  void initializeGridColors() {
+    gridColors = _isDarkMode
+        ? List.generate(20, (index) => const Color.fromARGB(255, 50, 50, 50)) // Dark mode colors
+        : List.generate(20, (index) => const Color.fromARGB(255, 250, 250, 250)); // Light mode colors
   }
 
   Future<void> _checkUser() async {
@@ -105,6 +105,7 @@ class _GameHardState extends State<GameHard>
         _isDarkMode = userDoc.get('isDarkMode') ?? false;
       });
       widget.toggleTheme(_isDarkMode); // Apply user-specific theme
+      initializeGridColors();
     } else {
       // If not logged in, ensure defaults are set
       setState(() {
@@ -112,6 +113,7 @@ class _GameHardState extends State<GameHard>
         _isDarkMode = false;
       });
       widget.toggleTheme(false); // Revert to light theme
+      initializeGridColors();
     }
   }
 
@@ -353,14 +355,7 @@ class _GameHardState extends State<GameHard>
       _isGameStarted = false;
       widget.onGameStarted(false);
       gridContent = List.generate(20, (index) => '');
-      gridColors = List.generate(
-          20,
-          (index) => const Color.fromARGB(
-                255,
-                250,
-                250,
-                250,
-              ));
+      initializeGridColors(); // Initialize grid colors based on the mode
       keyboardColors.clear();
       currentRow = 0;
       attempts = 0;
@@ -444,7 +439,9 @@ class _GameHardState extends State<GameHard>
         return AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
-          backgroundColor: Colors.white,
+          backgroundColor: _isDarkMode
+              ? const Color.fromARGB(255, 35, 35, 35)
+              : const Color.fromARGB(255, 250, 250, 250),
           title: Text("How to Play",
               style: TextStyle(fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
@@ -611,6 +608,9 @@ class _GameHardState extends State<GameHard>
               fontFamily: 'Fraunces',
               fontWeight: FontWeight.bold,
               fontSize: 32,
+              color: _isDarkMode
+                  ? const Color.fromARGB(255, 255, 255, 255)
+                  : Color.fromARGB(255, 0, 0, 0),
             ),
           ),
           centerTitle: true,
@@ -630,7 +630,7 @@ class _GameHardState extends State<GameHard>
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => Leaderboard(),
+                      builder: (context) => Leaderboard(isDarkMode: _isDarkMode),
                     ),
                   );
                 },
@@ -640,13 +640,16 @@ class _GameHardState extends State<GameHard>
                     Icon(
                       Icons.leaderboard,
                       size: 28,
+                      color: _isDarkMode
+                          ? Color.fromARGB(255, 255, 255, 255)
+                          : Color.fromARGB(255, 0, 0, 0),
                     ),
-                    SizedBox(height: 4),
+                    SizedBox(height: 1),
                     Text(
                       username ?? 'Username',
                       style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
+                        fontSize: 15,
+                        color: const Color.fromARGB(255, 130, 130, 130),
                       ),
                     ),
                   ],
@@ -662,18 +665,22 @@ class _GameHardState extends State<GameHard>
                 Expanded(
                   flex: 7,
                   child: Container(
-                    color: _isDarkMode
-                        ? Colors.grey[900]
+                    color: _isDarkMode //Warna Backgroundnya Grid
+                        ? Color.fromARGB(255, 33, 33, 33)
                         : Color.fromARGB(255, 255, 255, 255),
                     child:
-                        Grid(gridContent: gridContent, gridColors: gridColors),
+                        Grid(
+                        gridContent: gridContent, 
+                        gridColors: gridColors,
+                        isDarkMode: _isDarkMode
+                        ),
                   ),
                 ),
                 Expanded(
                   flex: 4,
                   child: Container(
-                    color: _isDarkMode
-                        ? Colors.black
+                    color: _isDarkMode 
+                        ? Color.fromARGB(255, 26, 26, 26) //Warna Backgroundnya Keyboard
                         : const Color.fromARGB(255, 250, 250, 250),
                     child: Column(
                       children: [
@@ -682,8 +689,8 @@ class _GameHardState extends State<GameHard>
                           child: Keyboard(
                             onKeyPressed: handleKeyPress,
                             onDeletePressed: handleDeletePress,
-                            keyboardColors:
-                                keyboardColors, // Pass keyboard colors
+                            keyboardColors: keyboardColors, // Pass keyboard colors
+                            isDarkMode: _isDarkMode, // Pass isDarkMode to Keyboard
                           ),
                         ),
                         Expanded(
@@ -695,8 +702,9 @@ class _GameHardState extends State<GameHard>
                                 ElevatedButton(
                                   onPressed: handleSubmit,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        Color.fromARGB(255, 210, 214, 219),
+                                    backgroundColor: _isDarkMode
+                                       ? Color.fromARGB(255, 44, 44, 44)
+                                       : Color.fromARGB(255, 210, 214, 219),
                                     minimumSize: Size(130, 40),
                                   ),
                                   child: Text(
@@ -704,8 +712,9 @@ class _GameHardState extends State<GameHard>
                                     style: TextStyle(
                                       fontFamily: 'FranklinGothic-Bold',
                                       fontWeight: FontWeight.bold,
-                                      color:
-                                          const Color.fromARGB(255, 39, 39, 39),
+                                      color: _isDarkMode
+                                        ?  Color.fromARGB(255, 255, 255, 255)
+                                        :  const Color.fromARGB(255, 39, 39, 39),
                                       fontSize: 20,
                                     ),
                                   ),
@@ -714,8 +723,9 @@ class _GameHardState extends State<GameHard>
                                 ElevatedButton(
                                   onPressed: handleReset,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        Color.fromARGB(255, 210, 214, 219),
+                                    backgroundColor: _isDarkMode
+                                       ? Color.fromARGB(255, 44, 44, 44)
+                                       : Color.fromARGB(255, 210, 214, 219),
                                     minimumSize: Size(130, 40),
                                   ),
                                   child: Text(
@@ -723,8 +733,9 @@ class _GameHardState extends State<GameHard>
                                     style: TextStyle(
                                       fontFamily: 'FranklinGothic-Bold',
                                       fontWeight: FontWeight.bold,
-                                      color:
-                                          const Color.fromARGB(255, 39, 39, 39),
+                                      color: _isDarkMode
+                                        ?  Color.fromARGB(255, 255, 255, 255)
+                                        :  const Color.fromARGB(255, 39, 39, 39),
                                       fontSize: 20,
                                     ),
                                   ),
@@ -818,7 +829,7 @@ class _GameHardState extends State<GameHard>
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      HistoryPage(), // Ensure you have imported HistoryPage
+                                      HistoryPage(isDarkMode: _isDarkMode), // Ensure you have imported HistoryPage
                                 ),
                               );
                             }
@@ -850,7 +861,7 @@ class _GameHardState extends State<GameHard>
                               backgroundColor: user == null
                                   ? Colors.white
                                   : const Color.fromARGB(
-                                      255, 45, 45, 45), // Background color
+                                       255, 45, 45, 45), // Background color
                               foregroundColor: user == null
                                   ? Colors.black
                                   : Colors.white, // Text color
@@ -878,9 +889,14 @@ class _GameHardState extends State<GameHard>
 class Grid extends StatelessWidget {
   final List<String> gridContent;
   final List<Color> gridColors;
+  final bool isDarkMode; // Add this line
 
-  const Grid({required this.gridContent, required this.gridColors, Key? key})
-      : super(key: key);
+  const Grid({
+    required this.gridContent,
+    required this.gridColors,
+    required this.isDarkMode, // Add this line
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -898,8 +914,9 @@ class Grid extends StatelessWidget {
           decoration: BoxDecoration(
             color: gridColors[index],
             border: Border.all(
-              color: Color.fromARGB(
-                  255, 210, 214, 219), // Set the border color here
+              color: isDarkMode // Use the parameter here
+                  ? Color.fromARGB(255, 50, 50, 50)
+                  : Color.fromARGB(255, 210, 214, 219), // Set the border color here
               width: 2, // Set the border width here
             ),
             borderRadius: BorderRadius.circular(6),
@@ -908,7 +925,9 @@ class Grid extends StatelessWidget {
             child: Text(
               gridContent[index],
               style: TextStyle(
-                color: Color.fromARGB(255, 39, 39, 39),
+                color: isDarkMode // Use the parameter here
+                    ? Color.fromARGB(255, 255, 255, 255)
+                    : Color.fromARGB(255, 0, 0, 0),
                 fontSize: 30,
                 fontFamily: 'FranklinGothic-Bold',
                 fontWeight: FontWeight.bold,
@@ -925,11 +944,13 @@ class Keyboard extends StatelessWidget {
   final Function(String) onKeyPressed;
   final Function() onDeletePressed;
   final Map<String, Color> keyboardColors;
+  final bool isDarkMode; // Add this line
 
   const Keyboard({
     required this.onKeyPressed,
     required this.onDeletePressed,
     required this.keyboardColors,
+    required this.isDarkMode, // Add this line
     Key? key,
   }) : super(key: key);
 
@@ -951,9 +972,9 @@ class Keyboard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: row.map((letter) {
-              final keyColor =
-                  keyboardColors[letter] ?? Color.fromARGB(255, 210, 214, 219);
-
+              final keyColor = isDarkMode // Use the parameter here
+                  ? keyboardColors[letter] ?? Color.fromARGB(255, 60, 60, 60)
+                  : keyboardColors[letter] ?? Color.fromARGB(255, 210, 214, 219);
               return GestureDetector(
                 onTap: () {
                   if (letter == '⌫') {
@@ -974,7 +995,9 @@ class Keyboard extends StatelessWidget {
                     child: Text(
                       letter,
                       style: TextStyle(
-                        color: Color.fromARGB(255, 39, 39, 39),
+                        color: isDarkMode // Use the parameter here
+                            ? Color.fromARGB(255, 255, 255, 255)
+                            : Color.fromARGB(255, 39, 39, 39),
                         fontSize: 20,
                         fontFamily: 'FranklinGothic-Bold',
                         fontWeight: FontWeight.bold,
@@ -985,9 +1008,7 @@ class Keyboard extends StatelessWidget {
               );
             }).toList(),
           ),
-          SizedBox(
-              height:
-                  8), // Adjust this value to control the vertical space between rows
+          SizedBox(height: 8),
         ],
       ],
     );
