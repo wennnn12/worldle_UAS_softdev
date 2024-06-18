@@ -184,6 +184,13 @@ Future<void> handleSubmit() async {
   }
 
   if (isRowComplete) {
+    String inputtedWord = gridContent.sublist(startIndex, endIndex).join();
+
+    if (!await _isValidWord(inputtedWord)) {
+      _showInvalidWordMessage();
+      return; // Exit the function if the word is not valid
+    }
+
     attempts++;
     bool hasWon = true;
 
@@ -248,6 +255,46 @@ Future<void> handleSubmit() async {
       });
     }
   }
+}
+
+Future<bool> _isValidWord(String word) async {
+  final wordList = await FirebaseFirestore.instance.collection('Wordlists').get();
+  final words = wordList.docs.map((doc) => doc['word'] as String).toList();
+  return words.contains(word);
+}
+
+void _showInvalidWordMessage() {
+  final overlay = Overlay.of(context);
+  final overlayEntry = OverlayEntry(
+    builder: (context) => Positioned(
+      top: MediaQuery.of(context).size.height * 0.2,
+      left: MediaQuery.of(context).size.width * 0.1,
+      right: MediaQuery.of(context).size.width * 0.1,
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+          decoration: BoxDecoration(
+            color: Colors.red.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: Center(
+            child: Text(
+              "Not in the word list",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18.0,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  overlay?.insert(overlayEntry);
+  Future.delayed(Duration(seconds: 1), () => overlayEntry.remove());
 }
 
   Future<Map<int, int>> _fetchGuessStats(String difficulty) async {

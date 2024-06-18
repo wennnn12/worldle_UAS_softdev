@@ -160,89 +160,136 @@ class _GameMediumState extends State<GameMedium>
     });
   }
 
-  Future<void> handleSubmit() async {
-    setState(() {
-      _isGameStarted = true;
-      widget.onGameStarted(true);
-    });
+Future<void> handleSubmit() async {
+  setState(() {
+    _isGameStarted = true;
+    widget.onGameStarted(true);
+  });
 
-    int startIndex = currentRow * 5;
-    int endIndex = startIndex + 5;
+  int startIndex = currentRow * 5;
+  int endIndex = startIndex + 5;
 
-    bool isRowComplete = true;
-    for (int i = startIndex; i < endIndex; i++) {
-      if (gridContent[i].isEmpty) {
-        isRowComplete = false;
-        break;
-      }
-    }
-
-    if (isRowComplete) {
-      attempts++;
-      bool hasWon = true;
-
-      // First pass: Identify and mark correct letters (green)
-      Map<String, int> targetLetterCounts = {};
-      for (int i = 0; i < targetWord.length; i++) {
-        String letter = targetWord[i];
-        if (!targetLetterCounts.containsKey(letter)) {
-          targetLetterCounts[letter] = 0;
-        }
-        targetLetterCounts[letter] = targetLetterCounts[letter]! + 1;
-      }
-
-      for (int i = 0; i < 5; i++) {
-        if (gridContent[startIndex + i] == targetWord[i]) {
-          gridColors[startIndex + i] = Color.fromARGB(255, 140, 255, 186);
-          keyboardColors[gridContent[startIndex + i]] =
-              Color.fromARGB(255, 140, 255, 186);
-          targetLetterCounts[gridContent[startIndex + i]] =
-              targetLetterCounts[gridContent[startIndex + i]]! - 1;
-        } else {
-          gridColors[startIndex + i] = Colors.grey;
-          hasWon = false;
-        }
-      }
-
-      // Second pass: Mark present but misplaced letters (yellow)
-      for (int i = 0; i < 5; i++) {
-        if (gridColors[startIndex + i] != Color.fromARGB(255, 140, 255, 186) &&
-            targetLetterCounts[gridContent[startIndex + i]] != null &&
-            targetLetterCounts[gridContent[startIndex + i]]! > 0) {
-          gridColors[startIndex + i] = Color.fromARGB(255, 254, 255, 182);
-          if (keyboardColors[gridContent[startIndex + i]] !=
-              Color.fromARGB(255, 140, 255, 186)) {
-            keyboardColors[gridContent[startIndex + i]] =
-                Color.fromARGB(255, 254, 255, 182);
-          }
-          targetLetterCounts[gridContent[startIndex + i]]! - 1;
-        } else if (gridColors[startIndex + i] == Colors.grey &&
-            !keyboardColors.containsKey(gridContent[startIndex + i])) {
-          keyboardColors[gridContent[startIndex + i]] = Colors.grey;
-        }
-      }
-
-      // Trigger the flip animation for each tile in the current row
-      for (int i = startIndex; i < endIndex; i++) {
-        flipTileKeys[i].currentState?.flip();
-      }
-
-      if (hasWon) {
-        _stopwatch.stop(); // Stop the stopwatch if the user wins
-        await _updateStats(true);
-        await Future.delayed(Duration(seconds: 1)); // Add 1 second delay
-        _showResultDialog(true);
-      } else if (currentRow >= 4) {
-        _stopwatch.stop(); // Stop the stopwatch if the user loses
-        await _updateStats(false);
-        _showResultDialog(false);
-      } else {
-        setState(() {
-          currentRow++;
-        });
-      }
+  bool isRowComplete = true;
+  for (int i = startIndex; i < endIndex; i++) {
+    if (gridContent[i].isEmpty) {
+      isRowComplete = false;
+      break;
     }
   }
+
+  if (isRowComplete) {
+    String inputtedWord = gridContent.sublist(startIndex, endIndex).join();
+
+    if (!await _isValidWord(inputtedWord)) {
+      _showInvalidWordMessage();
+      return; // Exit the function if the word is not valid
+    }
+
+    attempts++;
+    bool hasWon = true;
+
+    // First pass: Identify and mark correct letters (green)
+    Map<String, int> targetLetterCounts = {};
+    for (int i = 0; i < targetWord.length; i++) {
+      String letter = targetWord[i];
+      if (!targetLetterCounts.containsKey(letter)) {
+        targetLetterCounts[letter] = 0;
+      }
+      targetLetterCounts[letter] = targetLetterCounts[letter]! + 1;
+    }
+
+    for (int i = 0; i < 5; i++) {
+      if (gridContent[startIndex + i] == targetWord[i]) {
+        gridColors[startIndex + i] = Color.fromARGB(255, 140, 255, 186);
+        keyboardColors[gridContent[startIndex + i]] =
+            Color.fromARGB(255, 140, 255, 186);
+        targetLetterCounts[gridContent[startIndex + i]] =
+            targetLetterCounts[gridContent[startIndex + i]]! - 1;
+      } else {
+        gridColors[startIndex + i] = Colors.grey;
+        hasWon = false;
+      }
+    }
+
+    // Second pass: Mark present but misplaced letters (yellow)
+    for (int i = 0; i < 5; i++) {
+      if (gridColors[startIndex + i] != Color.fromARGB(255, 140, 255, 186) &&
+          targetLetterCounts[gridContent[startIndex + i]] != null &&
+          targetLetterCounts[gridContent[startIndex + i]]! > 0) {
+        gridColors[startIndex + i] = Color.fromARGB(220, 254, 255, 182);
+        if (keyboardColors[gridContent[startIndex + i]] !=
+            Color.fromARGB(255, 140, 255, 186)) {
+          keyboardColors[gridContent[startIndex + i]] =
+              Color.fromARGB(220, 254, 255, 182);
+        }
+        targetLetterCounts[gridContent[startIndex + i]]! - 1;
+      } else if (gridColors[startIndex + i] == Colors.grey &&
+          !keyboardColors.containsKey(gridContent[startIndex + i])) {
+        keyboardColors[gridContent[startIndex + i]] = Colors.grey;
+      }
+    }
+
+    // Trigger the flip animation for each tile in the current row
+    for (int i = startIndex; i < endIndex; i++) {
+      flipTileKeys[i].currentState?.flip();
+    }
+
+    if (hasWon) {
+      _stopwatch.stop(); // Stop the stopwatch if the user wins
+      await _updateStats(true);
+      await Future.delayed(Duration(seconds: 1)); // Add 1 second delay
+      _showResultDialog(true);
+    } else if (currentRow >= 5) {
+      _stopwatch.stop(); // Stop the stopwatch if the user loses
+      await _updateStats(false);
+      _showResultDialog(false);
+    } else {
+      setState(() {
+        currentRow++;
+      });
+    }
+  }
+}
+
+Future<bool> _isValidWord(String word) async {
+  final wordList = await FirebaseFirestore.instance.collection('Wordlists').get();
+  final words = wordList.docs.map((doc) => doc['word'] as String).toList();
+  return words.contains(word);
+}
+
+void _showInvalidWordMessage() {
+  final overlay = Overlay.of(context);
+  final overlayEntry = OverlayEntry(
+    builder: (context) => Positioned(
+      top: MediaQuery.of(context).size.height * 0.2,
+      left: MediaQuery.of(context).size.width * 0.1,
+      right: MediaQuery.of(context).size.width * 0.1,
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+          decoration: BoxDecoration(
+            color: Colors.red.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: Center(
+            child: Text(
+              "Not in the word list",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18.0,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  overlay?.insert(overlayEntry);
+  Future.delayed(Duration(seconds: 1), () => overlayEntry.remove());
+}
 
   Future<Map<int, int>> _fetchGuessStats(String difficulty) async {
     if (isGuest) return {};
