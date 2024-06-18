@@ -8,6 +8,7 @@ import 'result_dialog.dart';
 import 'login.dart'; // Import the login.dart file
 import 'setting.dart'; // Add this import
 import 'mainmenu.dart'; // Add this import
+import 'fliptile_anim.dart'; // Add this import
 
 class GameHard extends StatefulWidget {
   final String initialTargetWord;
@@ -34,6 +35,8 @@ class _GameHardState extends State<GameHard>
   bool isGuest = true; // Assume user is a guest by default
   User? currentUser;
   Map<String, dynamic>? userStats; // Store user stats
+  List<GlobalKey<FlipTileState>> flipTileKeys =
+      List.generate(20, (index) => GlobalKey<FlipTileState>()); // Add this line
 
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late AnimationController _animationController;
@@ -50,7 +53,6 @@ class _GameHardState extends State<GameHard>
   void initState() {
     super.initState();
     _stopwatch = Stopwatch(); // Initialize the stopwatch
-    _stopwatch.start(); // Start the stopwatch as soon as the game screen loads
     _fetchRandomWord().then((newWord) {
       setState(() {
         targetWord = newWord;
@@ -68,8 +70,14 @@ class _GameHardState extends State<GameHard>
 
   void initializeGridColors() {
     gridColors = _isDarkMode
-        ? List.generate(20, (index) => const Color.fromARGB(255, 50, 50, 50)) // Dark mode colors
-        : List.generate(20, (index) => const Color.fromARGB(255, 250, 250, 250)); // Light mode colors
+        ? List.generate(
+            20,
+            (index) =>
+                const Color.fromARGB(255, 50, 50, 50)) // Dark mode colors
+        : List.generate(
+            20,
+            (index) =>
+                const Color.fromARGB(255, 250, 250, 250)); // Light mode colors
   }
 
   Future<void> _checkUser() async {
@@ -128,6 +136,11 @@ class _GameHardState extends State<GameHard>
 
   void handleKeyPress(String letter) {
     setState(() {
+      if (!_stopwatch.isRunning) {
+        _stopwatch
+            .start(); // Start the stopwatch when the first letter is pressed
+      }
+
       int startIndex = currentRow * 5;
       int endIndex = startIndex + 5;
 
@@ -216,9 +229,15 @@ class _GameHardState extends State<GameHard>
         }
       }
 
+      // Trigger the flip animation for each tile in the current row
+      for (int i = startIndex; i < endIndex; i++) {
+        flipTileKeys[i].currentState?.flip();
+      }
+
       if (hasWon) {
         _stopwatch.stop(); // Stop the stopwatch if the user wins
         await _updateStats(true);
+        await Future.delayed(Duration(seconds: 1)); // Add 1 second delay
         _showResultDialog(true);
       } else if (currentRow >= 3) {
         _stopwatch.stop(); // Stop the stopwatch if the user loses
@@ -256,48 +275,47 @@ class _GameHardState extends State<GameHard>
     return guessStats;
   }
 
-void _showResultDialog(bool hasWon) async {
-  String difficulty = 'hard'; // Replace with current difficulty
-  int barsCount = difficulty == 'easy'
-      ? 6
-      : difficulty == 'medium'
-          ? 5
-          : 4;
-  Map<int, int> guessStats = await _fetchGuessStats(difficulty);
+  void _showResultDialog(bool hasWon) async {
+    String difficulty = 'hard'; // Replace with current difficulty
+    int barsCount = difficulty == 'easy'
+        ? 6
+        : difficulty == 'medium'
+            ? 5
+            : 4;
+    Map<int, int> guessStats = await _fetchGuessStats(difficulty);
 
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => Stack(
-      alignment: Alignment.center,
-      children: [
-        ResultDialog(
-          hasWon: hasWon,
-          attempts: attempts,
-          onRetry: () async {
-            await _fetchRandomWord().then((newWord) {
-              setState(() {
-                targetWord = newWord;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Stack(
+        alignment: Alignment.center,
+        children: [
+          ResultDialog(
+            hasWon: hasWon,
+            attempts: attempts,
+            onRetry: () async {
+              await _fetchRandomWord().then((newWord) {
+                setState(() {
+                  targetWord = newWord;
+                });
               });
-            });
-            handleReset();
-          },
-          stats: isGuest ? null : userStats,
-          isGuest: isGuest,
-          guessStats: guessStats,
-          barsCount: barsCount,
-        ),
-        if (hasWon)
-          ConfettiAnimation(hasWon: hasWon),
-      ],
-    ),
-  );
+              handleReset();
+            },
+            stats: isGuest ? null : userStats,
+            isGuest: isGuest,
+            guessStats: guessStats,
+            barsCount: barsCount,
+          ),
+          if (hasWon) ConfettiAnimation(hasWon: hasWon),
+        ],
+      ),
+    );
 
-  // Keep the confetti animation running for 2 seconds after the dialog appears
-  if (hasWon) {
-    await Future.delayed(Duration(seconds: 2));
+    // Keep the confetti animation running for 2 seconds after the dialog appears
+    if (hasWon) {
+      await Future.delayed(Duration(seconds: 2));
+    }
   }
-}
 
   Future<void> _updateStats(bool hasWon) async {
     if (isGuest) return;
@@ -375,7 +393,11 @@ void _showResultDialog(bool hasWon) async {
       currentRow = 0;
       attempts = 0;
       _stopwatch.reset(); // Reset the stopwatch when the game is reset
-      _stopwatch.start(); // Restart the stopwatch when the game is reset
+
+      // Reset the state of each flip tile
+      for (int i = 0; i < flipTileKeys.length; i++) {
+        flipTileKeys[i].currentState?.reset();
+      }
     });
   }
 
@@ -645,7 +667,8 @@ void _showResultDialog(bool hasWon) async {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => Leaderboard(isDarkMode: _isDarkMode),
+                      builder: (context) =>
+                          Leaderboard(isDarkMode: _isDarkMode),
                     ),
                   );
                 },
@@ -683,19 +706,20 @@ void _showResultDialog(bool hasWon) async {
                     color: _isDarkMode //Warna Backgroundnya Grid
                         ? Color.fromARGB(255, 33, 33, 33)
                         : Color.fromARGB(255, 255, 255, 255),
-                    child:
-                        Grid(
-                        gridContent: gridContent, 
-                        gridColors: gridColors,
-                        isDarkMode: _isDarkMode
-                        ),
+                    child: Grid(
+                      gridContent: gridContent,
+                      gridColors: gridColors,
+                      isDarkMode: _isDarkMode,
+                      flipTileKeys: flipTileKeys, // Add this line
+                    ),
                   ),
                 ),
                 Expanded(
                   flex: 4,
                   child: Container(
-                    color: _isDarkMode 
-                        ? Color.fromARGB(255, 26, 26, 26) //Warna Backgroundnya Keyboard
+                    color: _isDarkMode
+                        ? Color.fromARGB(
+                            255, 26, 26, 26) //Warna Backgroundnya Keyboard
                         : const Color.fromARGB(255, 250, 250, 250),
                     child: Column(
                       children: [
@@ -704,8 +728,10 @@ void _showResultDialog(bool hasWon) async {
                           child: Keyboard(
                             onKeyPressed: handleKeyPress,
                             onDeletePressed: handleDeletePress,
-                            keyboardColors: keyboardColors, // Pass keyboard colors
-                            isDarkMode: _isDarkMode, // Pass isDarkMode to Keyboard
+                            keyboardColors:
+                                keyboardColors, // Pass keyboard colors
+                            isDarkMode:
+                                _isDarkMode, // Pass isDarkMode to Keyboard
                           ),
                         ),
                         Expanded(
@@ -718,8 +744,8 @@ void _showResultDialog(bool hasWon) async {
                                   onPressed: handleSubmit,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: _isDarkMode
-                                       ? Color.fromARGB(255, 44, 44, 44)
-                                       : Color.fromARGB(255, 210, 214, 219),
+                                        ? Color.fromARGB(255, 44, 44, 44)
+                                        : Color.fromARGB(255, 210, 214, 219),
                                     minimumSize: Size(130, 40),
                                   ),
                                   child: Text(
@@ -728,8 +754,9 @@ void _showResultDialog(bool hasWon) async {
                                       fontFamily: 'FranklinGothic-Bold',
                                       fontWeight: FontWeight.bold,
                                       color: _isDarkMode
-                                        ?  Color.fromARGB(255, 255, 255, 255)
-                                        :  const Color.fromARGB(255, 39, 39, 39),
+                                          ? Color.fromARGB(255, 255, 255, 255)
+                                          : const Color.fromARGB(
+                                              255, 39, 39, 39),
                                       fontSize: 20,
                                     ),
                                   ),
@@ -739,8 +766,8 @@ void _showResultDialog(bool hasWon) async {
                                   onPressed: handleReset,
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: _isDarkMode
-                                       ? Color.fromARGB(255, 44, 44, 44)
-                                       : Color.fromARGB(255, 210, 214, 219),
+                                        ? Color.fromARGB(255, 44, 44, 44)
+                                        : Color.fromARGB(255, 210, 214, 219),
                                     minimumSize: Size(130, 40),
                                   ),
                                   child: Text(
@@ -749,8 +776,9 @@ void _showResultDialog(bool hasWon) async {
                                       fontFamily: 'FranklinGothic-Bold',
                                       fontWeight: FontWeight.bold,
                                       color: _isDarkMode
-                                        ?  Color.fromARGB(255, 255, 255, 255)
-                                        :  const Color.fromARGB(255, 39, 39, 39),
+                                          ? Color.fromARGB(255, 255, 255, 255)
+                                          : const Color.fromARGB(
+                                              255, 39, 39, 39),
                                       fontSize: 20,
                                     ),
                                   ),
@@ -843,8 +871,9 @@ void _showResultDialog(bool hasWon) async {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      HistoryPage(isDarkMode: _isDarkMode), // Ensure you have imported HistoryPage
+                                  builder: (context) => HistoryPage(
+                                    isDarkMode: _isDarkMode,
+                                  ), // Ensure you have imported HistoryPage
                                 ),
                               );
                             }
@@ -876,7 +905,7 @@ void _showResultDialog(bool hasWon) async {
                               backgroundColor: user == null
                                   ? Colors.white
                                   : const Color.fromARGB(
-                                       255, 45, 45, 45), // Background color
+                                      255, 45, 45, 45), // Background color
                               foregroundColor: user == null
                                   ? Colors.black
                                   : Colors.white, // Text color
@@ -905,11 +934,13 @@ class Grid extends StatelessWidget {
   final List<String> gridContent;
   final List<Color> gridColors;
   final bool isDarkMode; // Add this line
+  final List<GlobalKey<FlipTileState>> flipTileKeys; // Add this line
 
   const Grid({
     required this.gridContent,
     required this.gridColors,
     required this.isDarkMode, // Add this line
+    required this.flipTileKeys, // Add this line
     Key? key,
   }) : super(key: key);
 
@@ -925,30 +956,12 @@ class Grid extends StatelessWidget {
         crossAxisCount: 5,
       ),
       itemBuilder: (context, index) {
-        return Container(
-          decoration: BoxDecoration(
-            color: gridColors[index],
-            border: Border.all(
-              color: isDarkMode // Use the parameter here
-                  ? Color.fromARGB(255, 50, 50, 50)
-                  : Color.fromARGB(255, 210, 214, 219), // Set the border color here
-              width: 2, // Set the border width here
-            ),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Center(
-            child: Text(
-              gridContent[index],
-              style: TextStyle(
-                color: isDarkMode // Use the parameter here
-                    ? Color.fromARGB(255, 255, 255, 255)
-                    : Color.fromARGB(255, 0, 0, 0),
-                fontSize: 30,
-                fontFamily: 'FranklinGothic-Bold',
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+        return FlipTile(
+          key: flipTileKeys[index], // Add this line
+          letter: gridContent[index],
+          color: gridColors[index],
+          delay: (index % 5) * 100, // Adjust delay for each tile in the row
+          isDarkMode: isDarkMode,
         );
       },
     );
@@ -989,7 +1002,8 @@ class Keyboard extends StatelessWidget {
             children: row.map((letter) {
               final keyColor = isDarkMode // Use the parameter here
                   ? keyboardColors[letter] ?? Color.fromARGB(255, 60, 60, 60)
-                  : keyboardColors[letter] ?? Color.fromARGB(255, 210, 214, 219);
+                  : keyboardColors[letter] ??
+                      Color.fromARGB(255, 210, 214, 219);
               return GestureDetector(
                 onTap: () {
                   if (letter == '⌫') {
