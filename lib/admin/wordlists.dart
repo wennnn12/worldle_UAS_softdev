@@ -10,13 +10,22 @@ class _WordListsPageState extends State<WordListsPage> {
   final TextEditingController wordController = TextEditingController();
 
   void _addWord() {
-    String word = wordController.text.trim().toUpperCase(); // Convert to uppercase
-    if (word.length == 5) {
-      FirebaseFirestore.instance.collection('Wordlists').add({'word': word});
+    List<String> words = wordController.text.split('\n').map((word) => word.trim().toUpperCase()).toList();
+    bool allWordsValid = true;
+
+    for (String word in words) {
+      if (word.length == 5) {
+        FirebaseFirestore.instance.collection('Wordlists').add({'word': word});
+      } else {
+        allWordsValid = false;
+      }
+    }
+
+    if (allWordsValid) {
       wordController.clear();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Word must be 5 characters long.'),
+        content: Text('Each word must be 5 characters long.'),
         backgroundColor: Colors.red,
       ));
     }
@@ -36,15 +45,19 @@ class _WordListsPageState extends State<WordListsPage> {
             padding: EdgeInsets.all(20),
             child: TextField(
               controller: wordController,
-              maxLength: 5,
+              maxLines: null, // Allow multiple lines
               decoration: InputDecoration(
-                hintText: 'Enter a word (5 characters)',
+                hintText: 'Enter words (each 5 characters) separated by new lines',
+              ),
+              style: TextStyle(
+                fontFamily: 'Courier',
+                fontSize: 16,
               ),
             ),
           ),
           ElevatedButton(
             onPressed: _addWord,
-            child: Text('Add Word'),
+            child: Text('Add Words'),
           ),
           SizedBox(height: 20),
           StreamBuilder<QuerySnapshot>(
