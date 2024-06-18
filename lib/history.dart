@@ -4,6 +4,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart'; // Import the intl package
 
 class HistoryPage extends StatefulWidget {
+  final bool isDarkMode; // Add this line
+
+  const HistoryPage({Key? key, required this.isDarkMode}) : super(key: key); // Modify constructor
+
   @override
   _HistoryPageState createState() => _HistoryPageState();
 }
@@ -78,19 +82,23 @@ class _HistoryPageState extends State<HistoryPage> {
         endIndex > historyData.length ? historyData.length : endIndex);
 
     return Scaffold(
-      appBar: AppBar(),
-      body: Padding(
+      appBar: AppBar(
+        title: Text(
+          'History',
+          style: TextStyle(
+            fontFamily: 'FranklinGothic',
+            fontWeight: FontWeight.bold,
+            fontSize: 38,
+            color: widget.isDarkMode ? Colors.white : Colors.black,
+          ),
+        ),
+        backgroundColor: widget.isDarkMode ? Colors.black : Colors.white,
+      ),
+      body: Container(
+        color: widget.isDarkMode ? const Color.fromARGB(255, 26, 26, 26) : Colors.white,
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Text(
-              'HISTORY',
-              style: TextStyle(
-              fontFamily: 'FranklinGothic',
-              fontWeight: FontWeight.bold,
-              fontSize: 38,
-            ),
-            ),
             SizedBox(height: 16),
             Expanded(
               child: ListView.builder(
@@ -105,6 +113,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     duration: data['duration'] ?? 0,
                     difficulty: data['difficulty']?.toUpperCase() ?? 'N/A',
                     targetWord: data['targetWord'] ?? 'N/A',
+                    isDarkMode: widget.isDarkMode, // Pass the isDarkMode flag
                   );
                 },
               ),
@@ -125,7 +134,7 @@ class _HistoryPageState extends State<HistoryPage> {
                 ),
                 Text(
                   'Page ${currentPage + 1} of ${((historyData.length - 1) / itemsPerPage).ceil() + 1}',
-                  style: TextStyle(fontSize: 16),
+                  style: TextStyle(fontSize: 16, color: widget.isDarkMode ? Colors.white : Colors.black),
                 ),
                 TextButton(
                   onPressed: endIndex < historyData.length
@@ -154,6 +163,7 @@ class HistoryCard extends StatelessWidget {
   final String difficulty;
   final int duration;
   final String targetWord;
+  final bool isDarkMode; // Add this line
 
   HistoryCard({
     required this.index,
@@ -163,6 +173,7 @@ class HistoryCard extends StatelessWidget {
     required this.difficulty,
     required this.duration,
     required this.targetWord,
+    required this.isDarkMode, // Add this line
   });
 
   @override
@@ -173,146 +184,137 @@ class HistoryCard extends StatelessWidget {
 
     return Card(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10.0),
+        borderRadius: BorderRadius.circular(15.0),
       ),
       margin: EdgeInsets.symmetric(vertical: 6.0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: status == 'WIN'
-              ? Color.fromARGB(255, 205, 255, 225)
-              : const Color.fromARGB(255, 255, 224, 227),
-          borderRadius: BorderRadius.circular(10.0),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 110,
+      color: (status == 'WIN' ? Color.fromARGB(255, 205, 255, 225) : const Color.fromARGB(255, 255, 224, 227)),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 110,
+            decoration: BoxDecoration(
+              color: (status == 'WIN' ? Color.fromARGB(255, 140, 255, 186) : Color.fromARGB(255, 255, 182, 190)),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(15.0),
+                bottomLeft: Radius.circular(15.0),
+              ),
+            ),
+            child: Center(
+              child: Text(
+                '$index',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+          ),
+          VerticalDivider(
+            color: Color.fromARGB(255, 0, 0, 0),
+            thickness: 2,
+            width: 2,
+          ),
+          Expanded(
+            child: Container(
+              padding: EdgeInsets.all(10.0),
               decoration: BoxDecoration(
-                color: status == 'WIN'
-                    ? Color.fromARGB(255, 140, 255, 186)
-                    : Color.fromARGB(255, 255, 182, 190),
+                color: (status == 'WIN' ? Color.fromARGB(255, 205, 255, 225) : const Color.fromARGB(255, 255, 224, 227)),
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(15.0),
-                  bottomLeft: Radius.circular(15.0),
+                  topRight: Radius.circular(10.0),
+                  bottomRight: Radius.circular(10.0),
                 ),
               ),
-              child: Center(
-                child: Text(
-                  '$index',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-            ),
-            VerticalDivider(
-              color: Color.fromARGB(255, 0, 0, 0),
-              thickness: 2,
-              width: 2,
-            ),
-            Expanded(
-              child: Container(
-                padding: EdgeInsets.all(10.0),
-                decoration: BoxDecoration(
-                  color: status == 'WIN'
-                      ? Color.fromARGB(255, 205, 255, 225)
-                      : const Color.fromARGB(255, 255, 224, 227),
-                  borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(10.0),
-                    bottomRight: Radius.circular(10.0),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          date,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        date,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
                         ),
-                        Text(
-                          status,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: status == 'WIN' ? Color.fromARGB(255, 36, 36, 36) : Color.fromARGB(255, 36, 36, 36),
-                          ),
+                      ),
+                      Text(
+                        status,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: status == 'WIN' ? Color.fromARGB(255, 36, 36, 36) : Color.fromARGB(255, 36, 36, 36),
                         ),
-                      ],
-                    ),
-                    Divider(color: Colors.black, thickness: 1),
-                    Row(
-                      children: List.generate(
-                          5,
-                          (i) => Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 2.0),
-                                child: Container(
-                                  width: 20,
-                                  height: 20,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    border: Border.all(
-                                      color: Colors.black,
-                                      width: 1,
-                                    ),
-                                    borderRadius: BorderRadius.circular(4),
+                      ),
+                    ],
+                  ),
+                  Divider(color: isDarkMode ? Colors.white : Colors.black, thickness: 1),
+                  Row(
+                    children: List.generate(
+                        5,
+                        (i) => Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 2.0),
+                              child: Container(
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  color:Colors.white,
+                                  border: Border.all(
+                                    color:Colors.black,
+                                    width: 1,
                                   ),
-                                  child: Center(
-                                    child: Text(
-                                      i < targetWord.length
-                                          ? targetWord[i]
-                                          : '',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                      ),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    i < targetWord.length ? targetWord[i] : '',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color:Colors.black,
                                     ),
                                   ),
                                 ),
-                              )),
-                    ),
-                    SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '$guesses Guess${guesses > 1 ? 'es' : ''}',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                              ),
+                            )),
+                  ),
+                  SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '$guesses Guess${guesses > 1 ? 'es' : ''}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color:Colors.black,
                         ),
-                        Text(
-                          durationStr,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      ),
+                      Text(
+                        durationStr,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color:Colors.black,
                         ),
-                        Text(
-                          difficulty.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      ),
+                      Text(
+                        difficulty.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color:Colors.black,
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

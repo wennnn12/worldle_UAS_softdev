@@ -627,7 +627,7 @@ class _GameMediumState extends State<GameMedium>
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => Leaderboard(),
+                      builder: (context) => Leaderboard(isDarkMode: _isDarkMode),
                     ),
                   );
                 },
@@ -826,7 +826,7 @@ class _GameMediumState extends State<GameMedium>
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      HistoryPage(), // Ensure you have imported HistoryPage
+                                      HistoryPage(isDarkMode: _isDarkMode), // Ensure you have imported HistoryPage
                                 ),
                               );
                             }

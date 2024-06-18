@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Leaderboard extends StatefulWidget {
-  const Leaderboard({Key? key}) : super(key: key);
+  final bool isDarkMode; // Add this line
+
+  const Leaderboard({Key? key, required this.isDarkMode}) : super(key: key); // Modify constructor
 
   @override
   _LeaderboardState createState() => _LeaderboardState();
@@ -48,13 +50,15 @@ class _LeaderboardState extends State<Leaderboard> with SingleTickerProviderStat
   Color _getBackgroundColor(int rank) {
     switch (rank) {
       case 1:
-        return Color.fromARGB(255, 140, 255, 186);
+        return Color.fromARGB(255, 116, 215, 156);
       case 2:
-        return Color.fromARGB(255, 254, 255, 182);
+        return Color.fromARGB(255, 227, 228, 163);
       case 3:
-        return Color.fromARGB(255, 255,182,190);
+        return Color.fromARGB(255, 224, 160, 168);
       default:
-        return const Color.fromARGB(255, 209, 209, 209);
+        return widget.isDarkMode 
+        ? const Color.fromARGB(255, 80, 80, 80) 
+        : Color.fromARGB(255, 240, 240, 240);
     }
   }
 
@@ -87,15 +91,15 @@ class _LeaderboardState extends State<Leaderboard> with SingleTickerProviderStat
                   children: [
                     Text(
                       'Rank',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black),
                     ),
                     Text(
                       'Username',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black),
                     ),
                     Text(
                       'Wins',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black),
                     ),
                   ],
                 ),
@@ -122,19 +126,19 @@ class _LeaderboardState extends State<Leaderboard> with SingleTickerProviderStat
                             width: 40,
                             child: Text(
                               '#$rank',
-                              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black),
                             ),
                           ),
                           title: Padding(
                             padding: const EdgeInsets.only(left: 16.0),
                             child: Text(
                               username,
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500, color: widget.isDarkMode ? Colors.white : Colors.black),
                             ),
                           ),
                           trailing: Text(
                             wins.toString(),
-                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black),
                           ),
                         ),
                       ),
@@ -161,9 +165,13 @@ class _LeaderboardState extends State<Leaderboard> with SingleTickerProviderStat
               fontFamily: 'FranklinGothic',
               fontWeight: FontWeight.bold,
               fontSize: 38,
+              color: widget.isDarkMode ? Colors.white : Colors.black,
             ),
           ),
           centerTitle: true,
+          backgroundColor: widget.isDarkMode 
+          ? Colors.black 
+          : const Color.fromARGB(255, 250, 250, 250),
           bottom: TabBar(
             controller: _tabController,
             tabs: [
@@ -180,18 +188,21 @@ class _LeaderboardState extends State<Leaderboard> with SingleTickerProviderStat
               fontFamily: 'FranklinGothic',
               fontSize: 16,
             ),
-            labelColor: const Color.fromARGB(255, 39, 39, 39),
-            unselectedLabelColor: Colors.grey,
-            indicatorColor: const Color.fromARGB(255, 39, 39, 39),
+            labelColor: widget.isDarkMode ? Colors.white : const Color.fromARGB(255, 39, 39, 39),
+            unselectedLabelColor: widget.isDarkMode ? Colors.grey[600] : Colors.grey,
+            indicatorColor: widget.isDarkMode ? Colors.white : const Color.fromARGB(255, 39, 39, 39),
           ),
         ),
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            _buildLeaderboard('easy'),
-            _buildLeaderboard('medium'),
-            _buildLeaderboard('hard'),
-          ],
+        body: Container(
+          color: widget.isDarkMode ? const Color.fromARGB(255, 26, 26, 26) : Colors.white,
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildLeaderboard('easy'),
+              _buildLeaderboard('medium'),
+              _buildLeaderboard('hard'),
+            ],
+          ),
         ),
       ),
     );

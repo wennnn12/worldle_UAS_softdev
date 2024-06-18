@@ -635,7 +635,7 @@ class _GameEasyState extends State<GameEasy>
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => Leaderboard(),
+                      builder: (context) => Leaderboard(isDarkMode: _isDarkMode),
                     ),
                   );
                 },
@@ -833,7 +833,7 @@ class _GameEasyState extends State<GameEasy>
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      HistoryPage(), // Ensure you have imported HistoryPage
+                                      HistoryPage(isDarkMode: _isDarkMode), // Ensure you have imported HistoryPage
                                 ),
                               );
                             }

@@ -630,7 +630,7 @@ class _GameHardState extends State<GameHard>
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => Leaderboard(),
+                      builder: (context) => Leaderboard(isDarkMode: _isDarkMode),
                     ),
                   );
                 },
@@ -829,7 +829,7 @@ class _GameHardState extends State<GameHard>
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      HistoryPage(), // Ensure you have imported HistoryPage
+                                      HistoryPage(isDarkMode: _isDarkMode), // Ensure you have imported HistoryPage
                                 ),
                               );
                             }
