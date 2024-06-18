@@ -4,12 +4,14 @@ class GuessStatsBarChart extends StatelessWidget {
   final Map<int, int> guessStats;
   final int barsCount;
   final bool hasWon;
+  final int attempts;
 
   const GuessStatsBarChart({
     required this.guessStats,
     required this.barsCount,
     required this.hasWon,
-    Key? key
+    required this.attempts,
+    Key? key,
   }) : super(key: key);
 
   @override
@@ -26,6 +28,12 @@ class GuessStatsBarChart extends StatelessWidget {
           barWidth = 20; // Minimal width for count 0
         }
 
+        // Determine the color of the bar
+        Color barColor = Colors.grey;
+        if (hasWon && index + 1 == attempts) {
+          barColor = Color.fromARGB(255, 140, 255, 186);
+        }
+
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 4.0),
           child: Row(
@@ -38,7 +46,7 @@ class GuessStatsBarChart extends StatelessWidget {
                     Container(
                       height: 20,
                       width: barWidth,
-                      color: hasWon ? Color.fromARGB(255, 140, 255, 186) : Colors.grey,
+                      color: barColor,
                     ),
                   ],
                 ),
