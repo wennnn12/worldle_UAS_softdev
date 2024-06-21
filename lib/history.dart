@@ -69,6 +69,11 @@ class _HistoryPageState extends State<HistoryPage> {
       return bDate.compareTo(aDate);
     });
 
+    // Keep only the most recent 30 matches
+    if (allHistoryData.length > 30) {
+      allHistoryData = allHistoryData.sublist(0, 30);
+    }
+
     setState(() {
       historyData = allHistoryData;
     });
@@ -250,7 +255,7 @@ class HistoryCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  Divider(color: isDarkMode ? Colors.white : Colors.black, thickness: 1),
+                  Divider(color: Colors.black, thickness: 1),
                   Row(
                     children: List.generate(
                         5,
@@ -260,9 +265,9 @@ class HistoryCard extends StatelessWidget {
                                 width: 20,
                                 height: 20,
                                 decoration: BoxDecoration(
-                                  color:Colors.white,
+                                  color: Colors.white,
                                   border: Border.all(
-                                    color:Colors.black,
+                                    color: Colors.black,
                                     width: 1,
                                   ),
                                   borderRadius: BorderRadius.circular(4),
@@ -289,7 +294,7 @@ class HistoryCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color:Colors.black,
+                          color: Colors.black,
                         ),
                       ),
                       Text(
@@ -297,7 +302,7 @@ class HistoryCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color:Colors.black,
+                          color: Colors.black,
                         ),
                       ),
                       Text(
@@ -305,7 +310,7 @@ class HistoryCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color:Colors.black,
+                          color: Colors.black,
                         ),
                       ),
                     ],

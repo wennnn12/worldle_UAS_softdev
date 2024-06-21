@@ -153,6 +153,13 @@ class MainMenu extends StatelessWidget {
                       ),
                     ),
                   ),
+                  Text(
+                    'dev_vvvvvv',
+                    style: TextStyle(
+                    fontFamily: 'FranklinGothic',
+                    fontSize: 15,
+                    )
+                  ),
                 ],
               ),
             ),

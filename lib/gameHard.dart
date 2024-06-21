@@ -228,6 +228,11 @@ Future<void> handleSubmit() async {
       }
     }
 
+    // Trigger the flip animation for each tile in the current row
+    for (int i = startIndex; i < endIndex; i++) {
+      flipTileKeys[i].currentState?.flip();
+    }
+
     // Second pass: Mark present but misplaced letters (yellow)
     for (int i = 0; i < 5; i++) {
       if (!markedCorrect[i] &&
@@ -247,20 +252,15 @@ Future<void> handleSubmit() async {
       }
     }
 
-    // Trigger the flip animation for each tile in the current row
-    for (int i = startIndex; i < endIndex; i++) {
-      flipTileKeys[i].currentState?.flip();
-    }
-
     if (hasWon) {
       _stopwatch.stop(); // Stop the stopwatch if the user wins
       await _updateStats(true);
       await Future.delayed(Duration(seconds: 1)); // Add 1 second delay
       _showResultDialog(true);
     } else if (currentRow >= 3) {
-      await Future.delayed(Duration(seconds: 1));
       _stopwatch.stop(); // Stop the stopwatch if the user loses
       await _updateStats(false);
+      await Future.delayed(Duration(seconds: 1));
       _showResultDialog(false);
     } else {
       setState(() {
@@ -378,71 +378,71 @@ void _showInvalidWordMessage() {
     }
   }
 
-  Future<void> _updateStats(bool hasWon) async {
-    if (isGuest) return;
+Future<void> _updateStats(bool hasWon) async {
+  if (isGuest) return;
 
-    final duration = _stopwatch.elapsed.inSeconds; // Get the elapsed time
-    final difficulty = 'hard'; // Replace with current difficulty
-    final statsRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(currentUser!.uid)
-        .collection('stats')
-        .doc(difficulty);
-    final guessStatsRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(currentUser!.uid)
-        .collection('guessStats')
-        .doc(difficulty)
-        .collection('games')
-        .doc();
+  final duration = _stopwatch.elapsed.inSeconds; // Get the elapsed time
+  final difficulty = 'hard'; // Replace with current difficulty
+  final statsRef = FirebaseFirestore.instance
+      .collection('users')
+      .doc(currentUser!.uid)
+      .collection('stats')
+      .doc(difficulty);
+  final guessStatsRef = FirebaseFirestore.instance
+      .collection('users')
+      .doc(currentUser!.uid)
+      .collection('guessStats')
+      .doc(difficulty)
+      .collection('games')
+      .doc();
 
-    await FirebaseFirestore.instance.runTransaction((transaction) async {
-      final statsDoc = await transaction.get(statsRef);
+  await FirebaseFirestore.instance.runTransaction((transaction) async {
+    final statsDoc = await transaction.get(statsRef);
 
-      if (!statsDoc.exists) {
-        transaction.set(statsRef, {
-          'matchesPlayed': 1,
-          'wins': hasWon ? 1 : 0,
-          'winStreak': hasWon ? 1 : 0,
-          'highestWinStreak': hasWon ? 1 : 0,
-        });
-      } else {
-        final data = statsDoc.data()!;
-        final matchesPlayed = data['matchesPlayed'] + 1;
-        final wins = data['wins'] + (hasWon ? 1 : 0);
-        final winStreak = hasWon ? data['winStreak'] + 1 : 0;
-        final highestWinStreak = hasWon && winStreak > data['highestWinStreak']
-            ? winStreak
-            : data['highestWinStreak'];
+    if (!statsDoc.exists) {
+      transaction.set(statsRef, {
+        'matchesPlayed': 1,
+        'wins': hasWon ? 1 : 0,
+        'winStreak': hasWon ? 1 : 0,
+        'highestWinStreak': hasWon ? 1 : 0,
+      });
+    } else {
+      final data = statsDoc.data()!;
+      final matchesPlayed = data['matchesPlayed'] + 1;
+      final wins = data['wins'] + (hasWon ? 1 : 0);
+      final winStreak = hasWon ? data['winStreak'] + 1 : 0;
+      final highestWinStreak = hasWon && winStreak > data['highestWinStreak']
+          ? winStreak
+          : data['highestWinStreak'];
 
-        transaction.update(statsRef, {
+      transaction.update(statsRef, {
+        'matchesPlayed': matchesPlayed,
+        'wins': wins,
+        'winStreak': winStreak,
+        'highestWinStreak': highestWinStreak,
+      });
+
+      // Update the local state to reflect new stats
+      setState(() {
+        userStats = {
           'matchesPlayed': matchesPlayed,
-          'wins': wins,
+          'winPercentage': (wins / matchesPlayed) * 100,
           'winStreak': winStreak,
           'highestWinStreak': highestWinStreak,
-        });
-
-        // Update the local state to reflect new stats
-        setState(() {
-          userStats = {
-            'matchesPlayed': matchesPlayed,
-            'winPercentage': (wins / matchesPlayed) * 100,
-            'winStreak': winStreak,
-            'highestWinStreak': highestWinStreak,
-          };
-        });
-      }
-
-      // Save guess stats
-      transaction.set(guessStatsRef, {
-        'attempts': attempts,
-        'duration': duration, // Save the duration
-        'status': hasWon ? 'WIN' : 'LOSE', // Save the game result
-        'targetWord': targetWord, // Save the target word
-        'timestamp': FieldValue.serverTimestamp(),
+        };
       });
+    }
+
+    // Save guess stats
+    transaction.set(guessStatsRef, {
+      'attempts': attempts,
+      'duration': duration, // Save the duration
+      'status': hasWon ? 'WIN' : 'LOSE', // Save the game result
+      'targetWord': targetWord, // Save the target word
+      'timestamp': FieldValue.serverTimestamp(),
     });
-  }
+  });
+}
 
   void handleReset() {
     setState(() {
@@ -811,28 +811,6 @@ void _showInvalidWordMessage() {
                                   ),
                                   child: Text(
                                     'Submit',
-                                    style: TextStyle(
-                                      fontFamily: 'FranklinGothic-Bold',
-                                      fontWeight: FontWeight.bold,
-                                      color: _isDarkMode
-                                          ? Color.fromARGB(255, 255, 255, 255)
-                                          : const Color.fromARGB(
-                                              255, 39, 39, 39),
-                                      fontSize: 20,
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(width: 10),
-                                ElevatedButton(
-                                  onPressed: handleReset,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: _isDarkMode
-                                        ? Color.fromARGB(255, 44, 44, 44)
-                                        : Color.fromARGB(255, 210, 214, 219),
-                                    minimumSize: Size(130, 40),
-                                  ),
-                                  child: Text(
-                                    'Reset',
                                     style: TextStyle(
                                       fontFamily: 'FranklinGothic-Bold',
                                       fontWeight: FontWeight.bold,
