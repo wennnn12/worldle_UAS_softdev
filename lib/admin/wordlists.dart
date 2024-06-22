@@ -39,54 +39,58 @@ class _WordListsPageState extends State<WordListsPage> {
         centerTitle: true,
         elevation: 0,
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.all(20),
-            child: TextField(
-              controller: wordController,
-              maxLines: null, // Allow multiple lines
-              decoration: InputDecoration(
-                hintText: 'Enter words (each 5 characters) separated by new lines',
-              ),
-              style: TextStyle(
-                fontFamily: 'Courier',
-                fontSize: 16,
+      resizeToAvoidBottomInset: true, // This helps to prevent the overflow
+      body: SingleChildScrollView( // This helps to scroll the content when the keyboard appears
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.all(20),
+              child: TextField(
+                controller: wordController,
+                maxLines: null, // Allow multiple lines
+                decoration: InputDecoration(
+                  hintText: 'Enter words (each 5 characters) separated by new lines',
+                ),
+                style: TextStyle(
+                  fontFamily: 'Courier',
+                  fontSize: 16,
+                ),
               ),
             ),
-          ),
-          ElevatedButton(
-            onPressed: _addWord,
-            child: Text('Add Words'),
-          ),
-          SizedBox(height: 20),
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('Wordlists').snapshots(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return CircularProgressIndicator();
-              }
-              List<DocumentSnapshot> words = snapshot.data!.docs;
-              return ListView.builder(
-                shrinkWrap: true,
-                itemCount: words.length,
-                itemBuilder: (context, index) {
-                  var wordData = words[index].data() as Map<String, dynamic>;
-                  String word = wordData['word'] ?? ''; // Check for null value
-                  return ListTile(
-                    title: Text(word),
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete),
-                      onPressed: () {
-                        FirebaseFirestore.instance.collection('Wordlists').doc(words[index].id).delete();
-                      },
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ],
+            ElevatedButton(
+              onPressed: _addWord,
+              child: Text('Add Words'),
+            ),
+            SizedBox(height: 20),
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance.collection('Wordlists').snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return CircularProgressIndicator();
+                }
+                List<DocumentSnapshot> words = snapshot.data!.docs;
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(), // Prevent internal scrolling conflict
+                  itemCount: words.length,
+                  itemBuilder: (context, index) {
+                    var wordData = words[index].data() as Map<String, dynamic>;
+                    String word = wordData['word'] ?? ''; // Check for null value
+                    return ListTile(
+                      title: Text(word),
+                      trailing: IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () {
+                          FirebaseFirestore.instance.collection('Wordlists').doc(words[index].id).delete();
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
