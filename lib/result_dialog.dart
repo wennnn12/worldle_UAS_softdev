@@ -83,7 +83,7 @@ class ResultDialog extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontFamily: 'FranklinGothic',
-                      color: Colors.grey, // Light grey color
+                      color: Colors.grey,  
                     ),
                   ),
                   if (stats != null)

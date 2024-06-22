@@ -9,7 +9,7 @@ class SettingPage extends StatefulWidget {
   final Function(bool) toggleTheme;
   final bool isGameStarted;
   final Function(bool) setGameStarted;
-  final bool hasGuessed; // Track if the user has guessed
+  final bool hasGuessed;  
 
   SettingPage({
     required this.toggleTheme,
@@ -23,7 +23,7 @@ class SettingPage extends StatefulWidget {
 }
 
 class _SettingPageState extends State<SettingPage> {
-  int _difficultyLevel = 0; // 0: Easy, 1: Medium, 2: Hard
+  int _difficultyLevel = 0;  
   bool _isDarkMode = false;
   User? user;
 
@@ -31,7 +31,7 @@ class _SettingPageState extends State<SettingPage> {
   void initState() {
     super.initState();
     _isDarkMode =
-        widget.isGameStarted; // Initialize _isDarkMode with the game state
+        widget.isGameStarted;  
     _loadUserSettings();
   }
 
@@ -43,8 +43,8 @@ class _SettingPageState extends State<SettingPage> {
           .doc(user!.uid)
           .get();
       setState(() {
-        _difficultyLevel = userDoc.get('difficultyLevel') ?? 0; // Default value
-        _isDarkMode = userDoc.get('isDarkMode') ?? false; // Default value
+        _difficultyLevel = userDoc.get('difficultyLevel') ?? 0;  
+        _isDarkMode = userDoc.get('isDarkMode') ?? false;  
       });
     }
   }
@@ -67,7 +67,7 @@ class _SettingPageState extends State<SettingPage> {
     words.shuffle();
     return words.isNotEmpty
         ? words.first
-        : 'ERROR'; // Fallback word if list is empty
+        : 'ERROR';  
   }
 
   @override
@@ -212,7 +212,7 @@ class _SettingPageState extends State<SettingPage> {
         },
         child: Icon(Icons.check),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10), // Custom shape
+          borderRadius: BorderRadius.circular(10),  
         ),
         elevation: 5,
       ),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'login.dart'; // Import the login page
+import 'login.dart';  
 import 'dart:math' as Math;
 
 class BackgroundPainter extends CustomPainter {
@@ -90,16 +90,16 @@ class RegisterPage extends StatelessWidget {
         password: passwordController.text.trim(),
       );
 
-      // Add user data to Firestore collection with isAdmin set to false
+       
       await FirebaseFirestore.instance
           .collection('users')
           .doc(userCredential.user!.uid)
           .set({
         'email': emailController.text.trim(),
         'username': usernameController.text.trim(),
-        'isAdmin': false, // Set isAdmin to false for new users
-        'difficultyLevel': 0, // Default to easy
-        'isDarkMode': false, // Default to light mode
+        'isAdmin': false,  
+        'difficultyLevel': 0,  
+        'isDarkMode': false,  
       });
 
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -107,7 +107,7 @@ class RegisterPage extends StatelessWidget {
         backgroundColor: Colors.green,
       ));
 
-      // Redirect to the login page upon successful registration
+       
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(

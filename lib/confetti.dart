@@ -38,12 +38,12 @@ class _ConfettiAnimationState extends State<ConfettiAnimation> {
     return Stack(
       children: [
         Positioned(
-          bottom: 500, // Adjust this value to ensure visibility
+          bottom: 500,  
           left: 0,
           child: ConfettiWidget(
             confettiController: _controllerLeft,
-            blastDirection: -pi / 3, // Blasts at a 60-degree angle to the right
-            maxBlastForce: 150, // Adjust blast force to cover the screen
+            blastDirection: -pi / 3,  
+            maxBlastForce: 150,  
             minBlastForce: 10,
             emissionFrequency: 0.5,
             numberOfParticles: 2,
@@ -55,16 +55,16 @@ class _ConfettiAnimationState extends State<ConfettiAnimation> {
               Colors.green,
               Colors.orange,
               Colors.purple,
-            ], // Add colors to confetti
+            ],  
           ),
         ),
         Positioned(
-          bottom: 500, // Adjust this value to ensure visibility
+          bottom: 500,  
           right: 0,
           child: ConfettiWidget(
             confettiController: _controllerRight,
-            blastDirection: -2 * pi / 3, // Blasts at a 120-degree angle to the left
-            maxBlastForce: 150, // Adjust blast force to cover the screen
+            blastDirection: -2 * pi / 3,  
+            maxBlastForce: 150,  
             minBlastForce: 10,
             emissionFrequency: 0.5,
             numberOfParticles: 2,
@@ -76,7 +76,7 @@ class _ConfettiAnimationState extends State<ConfettiAnimation> {
               Colors.green,
               Colors.orange,
               Colors.purple,
-            ], // Add colors to confetti
+            ],  
           ),
         ),
       ],

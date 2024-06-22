@@ -1,4 +1,4 @@
-// manageaccount.dart
+ 
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -20,24 +20,24 @@ class ManageAccountPage extends StatelessWidget {
           }
           List<DocumentSnapshot> users = snapshot.data!.docs;
 
-          int nonAdminIndex = 0; // Counter for non-admin accounts
+          int nonAdminIndex = 0;  
 
           List<DataRow> rows = users
               .map<DataRow?>((user) {
                 var userData = user.data() as Map<String, dynamic>;
                 String username =
-                    userData['username'] ?? ''; // Check for null value
+                    userData['username'] ?? '';  
                 bool isAdmin = userData['isAdmin'] ?? false;
 
                 if (!isAdmin) {
-                  nonAdminIndex++; // Increment for non-admin account
+                  nonAdminIndex++;  
                   return DataRow(cells: [
                     DataCell(Text('$nonAdminIndex')),
                     DataCell(Text(username)),
                     DataCell(
                       ElevatedButton(
                         onPressed: () {
-                          // Move the account to deleted_accounts collection
+                           
                           Map<String, dynamic> deletedData = {
                             'username': username,
                             'deletedAt': DateTime.now(),
@@ -45,7 +45,7 @@ class ManageAccountPage extends StatelessWidget {
                           FirebaseFirestore.instance
                               .collection('deleted_accounts')
                               .add(deletedData);
-                          // Delete the account from users collection
+                           
                           FirebaseFirestore.instance
                               .collection('users')
                               .doc(user.id)

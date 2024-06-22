@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/intl.dart'; // Import the intl package
+import 'package:intl/intl.dart';  
 
 class HistoryPage extends StatefulWidget {
-  final bool isDarkMode; // Add this line
+  final bool isDarkMode;  
 
-  const HistoryPage({Key? key, required this.isDarkMode}) : super(key: key); // Modify constructor
+  const HistoryPage({Key? key, required this.isDarkMode}) : super(key: key);  
 
   @override
   _HistoryPageState createState() => _HistoryPageState();
@@ -29,7 +29,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
   Future<void> fetchHistoryData() async {
     final userId = currentUser!.uid;
-    final difficulties = ['easy', 'medium', 'hard']; // Adjust as needed
+    final difficulties = ['easy', 'medium', 'hard'];  
     List<Map<String, dynamic>> allHistoryData = [];
 
     for (String difficulty in difficulties) {
@@ -62,14 +62,14 @@ class _HistoryPageState extends State<HistoryPage> {
       }
     }
 
-    // Sort the history data from latest to oldest
+     
     allHistoryData.sort((a, b) {
       DateTime aDate = a['timestamp'] ?? DateTime(1970);
       DateTime bDate = b['timestamp'] ?? DateTime(1970);
       return bDate.compareTo(aDate);
     });
 
-    // Keep only the most recent 30 matches
+     
     if (allHistoryData.length > 30) {
       allHistoryData = allHistoryData.sublist(0, 30);
     }
@@ -118,7 +118,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     duration: data['duration'] ?? 0,
                     difficulty: data['difficulty']?.toUpperCase() ?? 'N/A',
                     targetWord: data['targetWord'] ?? 'N/A',
-                    isDarkMode: widget.isDarkMode, // Pass the isDarkMode flag
+                    isDarkMode: widget.isDarkMode,  
                   );
                 },
               ),
@@ -168,7 +168,7 @@ class HistoryCard extends StatelessWidget {
   final String difficulty;
   final int duration;
   final String targetWord;
-  final bool isDarkMode; // Add this line
+  final bool isDarkMode;  
 
   HistoryCard({
     required this.index,
@@ -178,7 +178,7 @@ class HistoryCard extends StatelessWidget {
     required this.difficulty,
     required this.duration,
     required this.targetWord,
-    required this.isDarkMode, // Add this line
+    required this.isDarkMode,  
   });
 
   @override

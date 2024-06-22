@@ -28,16 +28,16 @@ class _GameEasyState extends State<GameEasy>
     with SingleTickerProviderStateMixin {
   late String targetWord;
   List<String> gridContent = List.generate(30, (index) => '');
-  bool _isDarkMode = false; // Default to light mode
+  bool _isDarkMode = false;  
   late List<Color> gridColors;
   Map<String, Color> keyboardColors = {};
   int currentRow = 0;
   int attempts = 0;
   bool isGuest = true;
   User? currentUser;
-  Map<String, dynamic>? userStats; // Store user stats
+  Map<String, dynamic>? userStats;  
   List<GlobalKey<FlipTileState>> flipTileKeys =
-      List.generate(30, (index) => GlobalKey<FlipTileState>()); // Add this line
+      List.generate(30, (index) => GlobalKey<FlipTileState>());  
 
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late AnimationController _animationController;
@@ -45,14 +45,14 @@ class _GameEasyState extends State<GameEasy>
   bool _isDrawerOpen = false;
   String? username;
   User? user;
-  int _difficultyLevel = 0; // Default to easy mode
+  int _difficultyLevel = 0;  
   bool _isGameStarted = false;
-  late Stopwatch _stopwatch; // Add a stopwatch to track game duration
+  late Stopwatch _stopwatch;  
 
   @override
   void initState() {
     super.initState();
-    _stopwatch = Stopwatch(); // Initialize the stopwatch
+    _stopwatch = Stopwatch();  
     _fetchRandomWord().then((newWord) {
       setState(() {
         targetWord = newWord;
@@ -65,7 +65,7 @@ class _GameEasyState extends State<GameEasy>
     _slideAnimation = Tween<Offset>(begin: Offset(-1, 0), end: Offset(0, 0))
         .animate(_animationController);
     _checkUser();
-    initializeGridColors(); // Initialize the grid colors based on the theme
+    initializeGridColors();  
   }
 
   void initializeGridColors() {
@@ -73,11 +73,11 @@ class _GameEasyState extends State<GameEasy>
         ? List.generate(
             30,
             (index) =>
-                const Color.fromARGB(255, 50, 50, 50)) // Dark mode colors
+                const Color.fromARGB(255, 50, 50, 50))  
         : List.generate(
             30,
             (index) =>
-                const Color.fromARGB(255, 250, 250, 250)); // Light mode colors
+                const Color.fromARGB(255, 250, 250, 250));  
   }
 
   Future<void> _checkUser() async {
@@ -113,16 +113,16 @@ class _GameEasyState extends State<GameEasy>
         _difficultyLevel = userDoc.get('difficultyLevel') ?? 0;
         _isDarkMode = userDoc.get('isDarkMode') ?? false;
       });
-      widget.toggleTheme(_isDarkMode); // Apply user-specific theme
-      initializeGridColors(); // Reinitialize the grid colors based on the theme
+      widget.toggleTheme(_isDarkMode);  
+      initializeGridColors();  
     } else {
-      // If not logged in, ensure defaults are set
+       
       setState(() {
         _difficultyLevel = 0;
         _isDarkMode = false;
       });
-      widget.toggleTheme(false); // Revert to light theme
-      initializeGridColors(); // Reinitialize the grid colors based on the theme
+      widget.toggleTheme(false);  
+      initializeGridColors();  
     }
   }
 
@@ -137,7 +137,7 @@ class _GameEasyState extends State<GameEasy>
   void handleKeyPress(String letter) {
   setState(() {
     if (!_stopwatch.isRunning) {
-      _stopwatch.start(); // Start the stopwatch when the first letter is pressed
+      _stopwatch.start();  
     }
 
     int startIndex = currentRow * 5;
@@ -169,12 +169,12 @@ class _GameEasyState extends State<GameEasy>
 bool _isSubmitting = false;
 
 Future<void> handleSubmit() async {
-  if (_isSubmitting) return; // Prevent submission if already submitting
+  if (_isSubmitting) return;  
 
   setState(() {
     _isGameStarted = true;
     widget.onGameStarted(true);
-    _isSubmitting = true; // Set the submitting flag to true
+    _isSubmitting = true;  
   });
 
   int startIndex = currentRow * 5;
@@ -194,15 +194,15 @@ Future<void> handleSubmit() async {
     if (!await _isValidWord(inputtedWord)) {
       _showInvalidWordMessage();
       setState(() {
-        _isSubmitting = false; // Reset the submitting flag
+        _isSubmitting = false;  
       });
-      return; // Exit the function if the word is not valid
+      return;  
     }
 
     attempts++;
     bool hasWon = true;
 
-    // First pass: Identify and mark correct letters (green)
+     
     Map<String, int> targetLetterCounts = {};
     for (int i = 0; i < targetWord.length; i++) {
       String letter = targetWord[i];
@@ -227,12 +227,12 @@ Future<void> handleSubmit() async {
       }
     }
 
-    // Trigger the flip animation for each tile in the current row
+     
     for (int i = startIndex; i < endIndex; i++) {
       flipTileKeys[i].currentState?.flip();
     }
 
-    // Second pass: Mark present but misplaced letters (yellow)
+     
     for (int i = 0; i < 5; i++) {
       if (!markedCorrect[i] &&
           targetLetterCounts[gridContent[startIndex + i]] != null &&
@@ -252,12 +252,12 @@ Future<void> handleSubmit() async {
     }
 
     if (hasWon) {
-      _stopwatch.stop(); // Stop the stopwatch if the user wins
+      _stopwatch.stop();  
       await _updateStats(true);
-      await Future.delayed(Duration(seconds: 1)); // Add 1 second delay
+      await Future.delayed(Duration(seconds: 1));  
       _showResultDialog(true);
     } else if (currentRow >= 5) {
-      _stopwatch.stop(); // Stop the stopwatch if the user loses
+      _stopwatch.stop();  
       await _updateStats(false);
       await Future.delayed(Duration(seconds: 1));
       _showResultDialog(false);
@@ -268,11 +268,11 @@ Future<void> handleSubmit() async {
     }
   }
 
-  // Add a 2-second delay before allowing the next submission
+   
   await Future.delayed(Duration(seconds: 2));
 
   setState(() {
-    _isSubmitting = false; // Reset the submitting flag
+    _isSubmitting = false;  
   });
 }
 
@@ -288,7 +288,7 @@ void _showInvalidWordMessage() {
   final overlay = Overlay.of(context);
   final overlayEntry = OverlayEntry(
     builder: (context) => Positioned(
-      top: MediaQuery.of(context).size.height * 0.3, // Adjusted position
+      top: MediaQuery.of(context).size.height * 0.3,  
       left: MediaQuery.of(context).size.width * 0.1,
       right: MediaQuery.of(context).size.width * 0.1,
       child: Material(
@@ -336,7 +336,7 @@ void _showInvalidWordMessage() {
   }
 
   void _showResultDialog(bool hasWon) async {
-    String difficulty = 'easy'; // Replace with current difficulty
+    String difficulty = 'easy';  
     int barsCount = difficulty == 'easy'
         ? 6
         : difficulty == 'medium'
@@ -371,7 +371,7 @@ void _showInvalidWordMessage() {
       ),
     );
 
-    // Keep the confetti animation running for 2 seconds after the dialog appears
+     
     if (hasWon) {
       await Future.delayed(Duration(seconds: 2));
     }
@@ -380,8 +380,8 @@ void _showInvalidWordMessage() {
 Future<void> _updateStats(bool hasWon) async {
   if (isGuest) return;
 
-  final duration = _stopwatch.elapsed.inSeconds; // Get the elapsed time
-  final difficulty = 'easy'; // Replace with current difficulty
+  final duration = _stopwatch.elapsed.inSeconds;  
+  final difficulty = 'easy';  
   final statsRef = FirebaseFirestore.instance
       .collection('users')
       .doc(currentUser!.uid)
@@ -421,7 +421,7 @@ Future<void> _updateStats(bool hasWon) async {
         'highestWinStreak': highestWinStreak,
       });
 
-      // Update the local state to reflect new stats
+       
       setState(() {
         userStats = {
           'matchesPlayed': matchesPlayed,
@@ -432,12 +432,12 @@ Future<void> _updateStats(bool hasWon) async {
       });
     }
 
-    // Save guess stats
+     
     transaction.set(guessStatsRef, {
       'attempts': attempts,
-      'duration': duration, // Save the duration
-      'status': hasWon ? 'WIN' : 'LOSE', // Save the game result
-      'targetWord': targetWord, // Save the target word
+      'duration': duration,  
+      'status': hasWon ? 'WIN' : 'LOSE',  
+      'targetWord': targetWord,  
       'timestamp': FieldValue.serverTimestamp(),
     });
   });
@@ -449,14 +449,14 @@ void handleReset() {
     widget.onGameStarted(false);
     gridContent = List.generate(30, (index) => '');
     gridColors = _isDarkMode
-        ? List.generate(30, (index) => const Color.fromARGB(255, 50, 50, 50)) // Dark mode colors
-        : List.generate(30, (index) => const Color.fromARGB(255, 250, 250, 250)); // Light mode colors
+        ? List.generate(30, (index) => const Color.fromARGB(255, 50, 50, 50))  
+        : List.generate(30, (index) => const Color.fromARGB(255, 250, 250, 250));  
     keyboardColors.clear();
     currentRow = 0;
     attempts = 0;
-    _stopwatch.reset(); // Reset the stopwatch when the game is reset
+    _stopwatch.reset();  
 
-    // Reset the state of each flip tile
+     
     for (int i = 0; i < flipTileKeys.length; i++) {
       flipTileKeys[i].currentState?.reset();
     }
@@ -480,12 +480,12 @@ void handleReset() {
     setState(() {
       user = null;
       username = null;
-      // Revert settings to default (easy mode)
+       
       _difficultyLevel = 0;
       _isDarkMode = false;
     });
-    await _saveUserSettings(); // Save settings on logout
-    widget.toggleTheme(false); // Revert to light theme on logout
+    await _saveUserSettings();  
+    widget.toggleTheme(false);  
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -493,7 +493,7 @@ void handleReset() {
           toggleTheme: widget.toggleTheme,
           setGameStarted: widget.onGameStarted,
           isGameStarted: _isGameStarted,
-          hasGuessed: false, // Reset hasGuessed to false on logout
+          hasGuessed: false,  
         ),
       ),
     );
@@ -521,7 +521,7 @@ void handleReset() {
               TextButton(
                 child: Text("Okay"),
                 onPressed: () {
-                  Navigator.of(context).pop(); // Close the dialog
+                  Navigator.of(context).pop();  
                 },
               ),
             ],
@@ -648,11 +648,11 @@ void handleReset() {
                 ),
               ),
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop();  
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color.fromARGB(
-                    255, 255, 182, 190), // background (button) color
+                    255, 255, 182, 190),  
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -707,7 +707,7 @@ void handleReset() {
               fontFamily: 'Fraunces',
               fontWeight: FontWeight.bold,
               fontSize: 32,
-              color: _isDarkMode // Worldle icon
+              color: _isDarkMode  
                   ? const Color.fromARGB(255, 255, 255, 255)
                   : Color.fromARGB(255, 0, 0, 0),
             ),
@@ -718,7 +718,7 @@ void handleReset() {
               ? Colors.black
               : const Color.fromARGB(255, 250, 250, 250),
           leading: IconButton(
-            icon: Icon(Icons.menu), // Hamburger icon
+            icon: Icon(Icons.menu),  
             onPressed: toggleDrawer,
           ),
           actions: [
@@ -740,7 +740,7 @@ void handleReset() {
                     Icon(
                       Icons.leaderboard,
                       size: 28,
-                      color: _isDarkMode // Leaderboard icon
+                      color: _isDarkMode  
                           ? Color.fromARGB(255, 255, 255, 255)
                           : Color.fromARGB(255, 0, 0, 0),
                     ),
@@ -765,14 +765,14 @@ void handleReset() {
                 Expanded(
                   flex: 7,
                   child: Container(
-                    color: _isDarkMode //Warna Backgroundnya Grid
+                    color: _isDarkMode  
                         ? Color.fromARGB(255, 33, 33, 33)
                         : Color.fromARGB(255, 255, 255, 255),
                     child: Grid(
                         gridContent: gridContent,
                         gridColors: gridColors,
                         isDarkMode: _isDarkMode,
-                        flipTileKeys: flipTileKeys), // Add this line
+                        flipTileKeys: flipTileKeys),  
                   ),
                 ),
                 Expanded(
@@ -780,7 +780,7 @@ void handleReset() {
                   child: Container(
                     color: _isDarkMode
                         ? Color.fromARGB(
-                            255, 26, 26, 26) //Warna Backgroundnya Keyboard
+                            255, 26, 26, 26)  
                         : const Color.fromARGB(255, 250, 250, 250),
                     child: Column(
                       children: [
@@ -791,7 +791,7 @@ void handleReset() {
                             onDeletePressed: handleDeletePress,
                             isDarkMode: _isDarkMode,
                             keyboardColors:
-                                keyboardColors, // Pass keyboard colors
+                                keyboardColors,  
                           ),
                         ),
                         Expanded(
@@ -860,7 +860,7 @@ void handleReset() {
                                       ? Colors.white
                                       : Colors.black)),
                           onTap: () {
-                            // Handle Learn tap
+                             
                             toggleDrawer();
                             _showLearnPopup(context);
                           },
@@ -886,7 +886,7 @@ void handleReset() {
                                     isGameStarted: _isGameStarted,
                                     setGameStarted: widget.onGameStarted,
                                     hasGuessed: currentRow >
-                                        0, // Pass true if at least one guess is made
+                                        0,  
                                   ),
                                 ),
                               );
@@ -911,7 +911,7 @@ void handleReset() {
                                 MaterialPageRoute(
                                   builder: (context) => HistoryPage(
                                       isDarkMode:
-                                          _isDarkMode), // Ensure you have imported HistoryPage
+                                          _isDarkMode),  
                                 ),
                               );
                             }
@@ -943,10 +943,10 @@ void handleReset() {
                               backgroundColor: user == null
                                   ? Colors.white
                                   : const Color.fromARGB(
-                                      255, 45, 45, 45), // Background color
+                                      255, 45, 45, 45),  
                               foregroundColor: user == null
                                   ? Colors.black
-                                  : Colors.white, // Text color
+                                  : Colors.white,  
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(30),
                               ),
@@ -972,13 +972,13 @@ class Grid extends StatelessWidget {
   final List<String> gridContent;
   final List<Color> gridColors;
   final bool isDarkMode;
-  final List<GlobalKey<FlipTileState>> flipTileKeys; // Add this line
+  final List<GlobalKey<FlipTileState>> flipTileKeys;  
 
   const Grid({
     required this.gridContent,
     required this.gridColors,
     required this.isDarkMode,
-    required this.flipTileKeys, // Add this line
+    required this.flipTileKeys,  
     Key? key,
   }) : super(key: key);
 
@@ -995,11 +995,11 @@ class Grid extends StatelessWidget {
       ),
       itemBuilder: (context, index) {
         return FlipTile(
-          key: flipTileKeys[index], // Use the key here
+          key: flipTileKeys[index],  
           letter: gridContent[index],
           color: gridColors[index],
-          delay: (index % 5) * 100, // Adjust delay for each tile in the row
-          isDarkMode: isDarkMode, // Add this line
+          delay: (index % 5) * 100,  
+          isDarkMode: isDarkMode,  
         );
       },
     );
@@ -1010,13 +1010,13 @@ class Keyboard extends StatelessWidget {
   final Function(String) onKeyPressed;
   final Function() onDeletePressed;
   final Map<String, Color> keyboardColors;
-  final bool isDarkMode; // Add this line
+  final bool isDarkMode;  
 
   const Keyboard({
     required this.onKeyPressed,
     required this.onDeletePressed,
     required this.keyboardColors,
-    required this.isDarkMode, // Add this line
+    required this.isDarkMode,  
     Key? key,
   }) : super(key: key);
 
@@ -1038,7 +1038,7 @@ class Keyboard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: row.map((letter) {
-              final keyColor = isDarkMode // Use the parameter here
+              final keyColor = isDarkMode  
                   ? keyboardColors[letter] ?? Color.fromARGB(255, 60, 60, 60)
                   : keyboardColors[letter] ??
                       Color.fromARGB(255, 210, 214, 219);
@@ -1062,7 +1062,7 @@ class Keyboard extends StatelessWidget {
                     child: Text(
                       letter,
                       style: TextStyle(
-                        color: isDarkMode // Use the parameter here
+                        color: isDarkMode  
                             ? Color.fromARGB(255, 255, 255, 255)
                             : Color.fromARGB(255, 39, 39, 39),
                         fontSize: 20,

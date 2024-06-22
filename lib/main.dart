@@ -6,20 +6,20 @@ import 'gameEasy.dart';
 import 'gameMedium.dart';
 import 'gameHard.dart';
 
-// Define custom ThemeData
+ 
 final ThemeData customDarkTheme = ThemeData(
   brightness: Brightness.dark,
   primaryColor: Colors.grey[900],
   
   scaffoldBackgroundColor: Colors.grey[850],
 
-  // Customize more properties as needed
+   
 );
 
 final ThemeData customLightTheme = ThemeData(
   brightness: Brightness.light,
   primaryColor: Colors.white,
-  scaffoldBackgroundColor: Colors.grey[100], // Customize more properties as needed
+  scaffoldBackgroundColor: Colors.grey[100],  
 );
 
 void main() async {
@@ -35,8 +35,8 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool _isDarkMode = false;
-  bool _isGameStarted = false; // Maintain the game state here
-  bool _hasGuessed = false; // Track if a guess has been made
+  bool _isGameStarted = false;  
+  bool _hasGuessed = false;  
 
   void _toggleTheme(bool isDarkMode) {
     setState(() {

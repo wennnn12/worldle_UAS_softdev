@@ -40,10 +40,10 @@ class _LeaderboardState extends State<Leaderboard> with SingleTickerProviderStat
       }
     }
 
-    // Sort by wins in descending order
+     
     leaderboardData.sort((a, b) => b['wins'].compareTo(a['wins']));
 
-    // Return top 10
+     
     return leaderboardData.take(10).toList();
   }
 

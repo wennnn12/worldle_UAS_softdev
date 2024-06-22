@@ -13,7 +13,7 @@ class FlipTile extends StatefulWidget {
     required this.color,
     required this.delay,
     required this.key,
-    required this.isDarkMode, // Add this line
+    required this.isDarkMode,  
   }) : super(key: key);
 
   @override
@@ -83,10 +83,10 @@ class FlipTileState extends State<FlipTile>
                         ? const Color.fromARGB(255, 50, 50, 50)
                         : const Color.fromARGB(255, 250, 250, 250),
                     border: Border.all(
-                      color: widget.isDarkMode // Use the parameter here
+                      color: widget.isDarkMode  
                           ? Color.fromARGB(255, 50, 50, 50)
-                          : Color.fromARGB(255, 210, 214, 219), // Set the border color here
-                      width: 2, // Set the border width here
+                          : Color.fromARGB(255, 210, 214, 219),  
+                      width: 2,  
                     ),
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -107,7 +107,7 @@ class FlipTileState extends State<FlipTile>
                   alignment: Alignment.center,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: widget.color, // Final color after flip
+                      color: widget.color,  
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Center(

@@ -29,7 +29,7 @@ class MainMenu extends StatelessWidget {
     words.shuffle();
     return words.isNotEmpty
         ? words.first
-        : 'ERROR'; // Fallback word if list is empty
+        : 'ERROR';  
   }
 
     @override
@@ -37,7 +37,7 @@ class MainMenu extends StatelessWidget {
     return WillPopScope(
       onWillPop: () async => false,
       child: Scaffold(
-        backgroundColor: Color.fromARGB(255, 245, 245, 238), // Set the background color
+        backgroundColor: Color.fromARGB(255, 245, 245, 238),  
         body: Stack(
           children: [
             CustomPaint(
@@ -59,10 +59,10 @@ class MainMenu extends StatelessWidget {
                   SizedBox(height: 100),
                   ElevatedButton(
                     onPressed: () async {
-                      String difficulty = 'easy'; // Default to easy mode
+                      String difficulty = 'easy';  
                       User? user = FirebaseAuth.instance.currentUser;
                       if (user != null) {
-                        // Fetch user-specific difficulty
+                         
                         var userData = await FirebaseFirestore.instance
                             .collection('users')
                             .doc(user.uid)
@@ -74,9 +74,9 @@ class MainMenu extends StatelessWidget {
                                   ? 'hard'
                                   : 'easy';
                           bool isDarkMode = userData.get('isDarkMode') ?? false;
-                          toggleTheme(isDarkMode); // Apply user-specific theme
+                          toggleTheme(isDarkMode);  
                         } catch (e) {
-                          // Field doesn't exist, keep default value
+                           
                         }
                       }
                       String randomWord = await _fetchRandomWord(difficulty);
@@ -111,17 +111,17 @@ class MainMenu extends StatelessWidget {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color.fromARGB(
-                          255, 140, 255, 186), // Set the button color to green
-                      minimumSize: Size(200, 60), // Increase the button size
+                          255, 140, 255, 186),  
+                      minimumSize: Size(200, 60),  
                     ),
                     child: Text(
                       'PLAY',
                       style: TextStyle(
-                        fontFamily: 'FranklinGothic', // Use Franklin Gothic font
-                        fontWeight: FontWeight.bold, // Set the font weight to bold
+                        fontFamily: 'FranklinGothic',  
+                        fontWeight: FontWeight.bold,  
                         color: const Color.fromARGB(
-                            255, 0, 45, 10), // Set the text color to dimmer green
-                        fontSize: 34, // Increase the text size
+                            255, 0, 45, 10),  
+                        fontSize: 34,  
                       ),
                     ),
                   ),
@@ -139,17 +139,17 @@ class MainMenu extends StatelessWidget {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Color.fromARGB(
-                          255, 192, 204, 220), // Set the button color to green
-                      minimumSize: Size(190, 55), // Increase the button size
+                          255, 192, 204, 220),  
+                      minimumSize: Size(190, 55),  
                     ),
                     child: Text(
                       'LOGIN',
                       style: TextStyle(
-                        fontFamily: 'FranklinGothic', // Use Franklin Gothic font
-                        fontWeight: FontWeight.bold, // Set the font weight to bold
+                        fontFamily: 'FranklinGothic',  
+                        fontWeight: FontWeight.bold,  
                         color: const Color.fromARGB(
-                            255, 8, 4, 52), // Set the text color to dimmer green
-                        fontSize: 26, // Increase the text size
+                            255, 8, 4, 52),  
+                        fontSize: 26,  
                       ),
                     ),
                   ),

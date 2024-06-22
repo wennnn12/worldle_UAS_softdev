@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'gameEasy.dart';
-import 'gameMedium.dart'; // Import the GameMedium file
-import 'gameHard.dart'; // Import the GameHard file
+import 'gameMedium.dart';  
+import 'gameHard.dart';  
 import 'admin/admin.dart';
 import 'register.dart';
-import 'setting.dart'; // Import setting.dart
+import 'setting.dart';  
 import 'dart:math' as Math;
 
 class LoginPage extends StatelessWidget {
@@ -26,7 +26,7 @@ class LoginPage extends StatelessWidget {
     final wordList = await FirebaseFirestore.instance.collection('Wordlists').get();
     final words = wordList.docs.map((doc) => doc['word'] as String).toList();
     words.shuffle();
-    return words.isNotEmpty ? words.first : 'ERROR'; // Fallback word if list is empty
+    return words.isNotEmpty ? words.first : 'ERROR';  
   }
 
   Future<void> _loginUser(BuildContext context) async {
@@ -51,31 +51,31 @@ class LoginPage extends StatelessWidget {
               toggleTheme: toggleTheme,
               setGameStarted: setGameStarted,
               isGameStarted: isGameStarted,
-              hasGuessed: false, // Adjust as necessary
+              hasGuessed: false,  
             ),
           ),
         );
       } else {
-        // Fetch user-specific settings
-        int difficultyLevel = 0; // Default to easy
-        bool isDarkMode = false; // Default to light mode
+         
+        int difficultyLevel = 0;  
+        bool isDarkMode = false;  
 
         try {
           difficultyLevel = userData.get('difficultyLevel');
         } catch (e) {
-          // Field doesn't exist, keep default value
+           
         }
 
         try {
           isDarkMode = userData.get('isDarkMode');
         } catch (e) {
-          // Field doesn't exist, keep default value
+           
         }
 
         toggleTheme(isDarkMode);
         String randomWord = await _fetchRandomWord();
 
-        // Navigate to the appropriate game screen based on difficulty level
+         
         Widget targetPage;
         switch (difficultyLevel) {
           case 0:

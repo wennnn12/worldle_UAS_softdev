@@ -20,15 +20,15 @@ class GuessStatsBarChart extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: List.generate(barsCount, (index) {
         int count = guessStats[index + 1] ?? 0;
-        double maxWidth = MediaQuery.of(context).size.width - 40; // Adjust width as needed
+        double maxWidth = MediaQuery.of(context).size.width - 40;  
         double barWidth = (count / (guessStats.values.isEmpty ? 1 : guessStats.values.reduce((a, b) => a > b ? a : b))) * maxWidth;
 
-        // Ensure a minimal width for bars with count 0
+         
         if (barWidth == 0) {
-          barWidth = 20; // Minimal width for count 0
+          barWidth = 20;  
         }
 
-        // Determine the color of the bar
+         
         Color barColor = Colors.grey;
         if (hasWon && index + 1 == attempts) {
           barColor = Color.fromARGB(255, 140, 255, 186);
